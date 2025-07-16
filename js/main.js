@@ -323,7 +323,36 @@ function placeImagePreview(img) {
 }
 
 function uploadImage() {
-	let imgDataUrl = generateCroppedImage(g.imagePreviewContainer.querySelector('img'), g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
+	// Save current preview size
+	let preview = ut.el('.image-preview');
+	let prevW = preview.style.width;
+	let prevH = preview.style.height;
+	// Set preview to max size for export
+	let maxW = g.cssVars['--image-width']?.computed || 800;
+	let maxH = g.cssVars['--image-height']?.computed || 600;
+	preview.style.width = maxW + 'px';
+	preview.style.height = maxH + 'px';
+	// Update global size
+	g.imageWidth = maxW;
+	g.imageHeight = maxH;
+
+	// Generate cropped image
+	let img = g.imagePreviewContainer.querySelector('img');
+	let cropSize = { width: maxW, height: maxH };
+	let imgDataUrl = generateCroppedImage(img, g.lastScale, g.lastPos, cropSize);
+
+	// Restore preview size
+	preview.style.width = prevW;
+	preview.style.height = prevH;
+	// Restore global size
+	let section = ut.el('main > section');
+	let style = window.getComputedStyle(section);
+	let padLeft = parseFloat(style.paddingLeft) || 0;
+	let padRight = parseFloat(style.paddingRight) || 0;
+	let sectionW = section.offsetWidth - padLeft - padRight;
+	g.imageWidth = Math.min(sectionW, maxW);
+	g.imageHeight = Math.min(sectionW, maxW);
+
 	let win = window.open();
 	if (win) {
 		win.document.write(/*html*/`
@@ -333,7 +362,7 @@ function uploadImage() {
 					<img src='${imgDataUrl}'>
 				</body>
 			</html>`
-	);
+		);
 		win.document.close();
 	}
 }
@@ -346,26 +375,28 @@ function generateCroppedImage(img, scale, pos, cropSize) {
 	canvas.height = cropSize.height;
 	let ctx = canvas.getContext('2d');
 
-	// Calculate the crop area in the source image
-	// Center of preview container
-	let preview = ut.el('.image-preview');
-	let cW = preview.offsetWidth;
-	let cH = preview.offsetHeight;
-	let cropCenterX = cW / 2;
-	let cropCenterY = cH / 2;
+	// Draw blank black canvas first
+	ctx.fillStyle = '#000';
+	ctx.fillRect(0, 0, cropSize.width, cropSize.height);
 
-	// The top-left of the crop area in preview coordinates
-	let cropX = cropCenterX - cropSize.width / 2;
-	let cropY = cropCenterY - cropSize.height / 2;
+	// Draw the image exactly as positioned and scaled in the preview
+	let iW = img.naturalWidth;
+	let iH = img.naturalHeight;
+	scale = Math.max(0.0001, scale); // avoid div by zero
 
-	// Map preview coordinates to image coordinates
-	// imgX = (previewX - pos.x) / scale
-	let srcX = (cropX - pos.x) / scale;
-	let srcY = (cropY - pos.y) / scale;
-	let srcW = cropSize.width / scale;
-	let srcH = cropSize.height / scale;
+	// The image in the preview is transformed by pos and scale
+	// We want to draw the image at the same offset and scale on the canvas
+	// The canvas is the same size as the preview
+	// So: drawImage(img, dx, dy, dw, dh)
+	// dx = pos.x, dy = pos.y, dw = iW * scale, dh = iH * scale
+	// If part of the image is outside the canvas, it will be clipped, and the background will show
+	ctx.save();
+	ctx.beginPath();
+	ctx.rect(0, 0, cropSize.width, cropSize.height);
+	ctx.clip();
+	ctx.drawImage(img, pos.x, pos.y, iW * scale, iH * scale);
+	ctx.restore();
 
-	ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, cropSize.width, cropSize.height);
 	let out = canvas.toDataURL('image/jpeg', 0.92); // 0.92 is a good default quality
 	return out;
 }
