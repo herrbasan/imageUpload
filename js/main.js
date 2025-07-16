@@ -67,55 +67,50 @@ function placeImagePreview(img) {
 	ut.killKids(g.imagePreviewContainer);
 	g.imagePreviewContainer.appendChild(img);
 
+	// Always use reference size for transforms
+	let refW = g.cssVars['--image-width']?.computed || 800;
+	let refH = g.cssVars['--image-height']?.computed || 800;
 	let scale = 1;
 	let pos = { x: 0, y: 0 };
-	// Store current transform globally for cropping
 	g.lastScale = scale;
 	g.lastPos = pos;
 	let start = { x: 0, y: 0 };
 	let dragging = false;
-
 	let rafId = null;
 	let last = { x: pos.x, y: pos.y, scale: scale };
-
 	const MIN_ZOOM = 0.05;
 	const MAX_ZOOM = 2.5;
 
-	// Recalculate transforms on container resize
-	function handleResizeTransform() {
-		// Re-fit image to container, but keep current scale and center
-		let preview = ut.el('.image-preview');
-		let cW = g.imageWidth || preview.offsetWidth;
-		let cH = g.imageHeight || preview.offsetHeight;
-		let iW = img.naturalWidth;
-		let iH = img.naturalHeight;
-		// Center image at current scale
-		pos.x = (cW - iW * scale) / 2;
-		pos.y = (cH - iH * scale) / 2;
-		setTransform();
-	}
-	window.addEventListener('resize', handleResizeTransform);
-
-	// Initial fit-to-container
+	// Initial fit-to-reference
 	function applyInitialTransform() {
-		let preview = ut.el('.image-preview');
-		let cW = g.imageWidth || preview.offsetWidth;
-		let cH = g.imageHeight || preview.offsetHeight;
 		let iW = img.naturalWidth;
 		let iH = img.naturalHeight;
-		ut.log(`Image size: ${iW}x${iH}, Container size: ${cW}x${cH}`);
-		if (iW && iH && cW && cH) {
-			let scaleW = cW / iW;
-			let scaleH = cH / iH;
+		ut.log(`Image size: ${iW}x${iH}, Reference size: ${refW}x${refH}`);
+		if (iW && iH && refW && refH) {
+			let scaleW = refW / iW;
+			let scaleH = refH / iH;
 			ut.log(`Initial scale: ${scaleW} (width), ${scaleH} (height)`);
 			scale = Math.min(scaleW, scaleH);
 			scale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale));
-			pos.x = (cW - iW * scale) / 2;
-			pos.y = (cH - iH * scale) / 2;
+			pos.x = (refW - iW * scale) / 2;
+			pos.y = (refH - iH * scale) / 2;
 			setTransform();
 		}
 	}
 	img.onload = applyInitialTransform;
+
+	// When container is resized, only update visual size, not transform logic
+	window.addEventListener('resize', () => {
+		let preview = ut.el('.image-preview');
+		let section = ut.el('main > section');
+		let style = window.getComputedStyle(section);
+		let padLeft = parseFloat(style.paddingLeft) || 0;
+		let padRight = parseFloat(style.paddingRight) || 0;
+		let sectionW = section.offsetWidth - padLeft - padRight;
+		let w = Math.min(sectionW, refW);
+		preview.style.width = w + 'px';
+		preview.style.height = w + 'px';
+	});
 
 	// Reset button handler
 	let resetBtn = ut.el('#reset-image');
@@ -140,12 +135,6 @@ function placeImagePreview(img) {
 			if (zoomSlider && Number(zoomSlider.value) !== scale) {
 				zoomSlider.value = scale;
 			}
-			// Update container size for transforms
-			let preview = ut.el('.image-preview');
-			let cW = g.imageWidth || preview.offsetWidth;
-			let cH = g.imageHeight || preview.offsetHeight;
-			g.imageWidth = cW;
-			g.imageHeight = cH;
 			// Store current transform globally for cropping
 			g.lastScale = scale;
 			g.lastPos = { x: pos.x, y: pos.y };
@@ -159,19 +148,11 @@ function placeImagePreview(img) {
 		zoomSlider.addEventListener('input', function() {
 			let prevScale = scale;
 			let nextScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(zoomSlider.value)));
-			// Center image in container when zooming
-			let container = g.imagePreviewContainer;
-			let cW = g.imageWidth || container.offsetWidth;
-			let cH = g.imageHeight || container.offsetHeight;
-			let iW = img.naturalWidth;
-			let iH = img.naturalHeight;
-			// Calculate center of container
-			let centerX = cW / 2;
-			let centerY = cH / 2;
-			// Calculate image center before zoom
+			// Center image in reference container when zooming
+			let centerX = refW / 2;
+			let centerY = refH / 2;
 			let imgCenterX = (centerX - pos.x) / prevScale;
 			let imgCenterY = (centerY - pos.y) / prevScale;
-			// Adjust position so zoom is centered on container center
 			pos.x -= (imgCenterX * (nextScale - prevScale));
 			pos.y -= (imgCenterY * (nextScale - prevScale));
 			scale = nextScale;
@@ -181,23 +162,16 @@ function placeImagePreview(img) {
 
 	img.addEventListener('wheel', function(e) {
 		e.preventDefault();
-		let container = g.imagePreviewContainer;
-		let cRect = container.getBoundingClientRect();
 		let prevScale = scale;
-		// Make zoom step proportional to current scale
 		let baseStep = 0.05;
 		let step = baseStep * scale;
 		let delta = e.deltaY > 0 ? -step : step;
 		let nextScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale + delta));
-		// Calculate center of container
-		let cW = g.imageWidth || container.offsetWidth;
-		let cH = g.imageHeight || container.offsetHeight;
-		let centerX = cW / 2;
-		let centerY = cH / 2;
-		// Calculate image center before zoom
+		// Center image in reference container
+		let centerX = refW / 2;
+		let centerY = refH / 2;
 		let imgCenterX = (centerX - pos.x) / prevScale;
 		let imgCenterY = (centerY - pos.y) / prevScale;
-		// Adjust position so zoom is centered on container center
 		pos.x -= (imgCenterX * (nextScale - prevScale));
 		pos.y -= (imgCenterY * (nextScale - prevScale));
 		scale = nextScale;
