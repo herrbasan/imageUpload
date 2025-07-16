@@ -24,6 +24,8 @@
 	--border-width: thin;
 	--border-radius: var(--space-padding-quarter);
 	--border-color:rgb(34, 34, 34);
+
+	--focus-outline: 2px solid var(--color-text);
 	--image-width: 512px;
 	--image-height: 512px;
 	--mask-circle-size: 100%;
@@ -63,6 +65,12 @@ body {
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+*:focus-visible,
+button:focus-visible {
+	outline: var(--focus-outline);
+	outline-offset: 0.2rem;
 }
 
 main {
@@ -123,7 +131,6 @@ input[type="file"]::file-selector-button:hover,
 input[type="file"]::file-selector-button:focus-visible {
 	background: var(--accent-color);
 	color: var(--color-btn-hover-text);
-	outline: none;
 }
 
 :root:not([data-theme="dark"]) .dark-icon {
