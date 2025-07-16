@@ -9,6 +9,10 @@ function init() {
 	g.cssVars = ut.getCssVars();
 	g.imageWidth = g.cssVars['--image-width']?.computed || 800;
 	g.imageHeight = g.cssVars['--image-height']?.computed || 600;
+	g.canvas = document.createElement('canvas');
+	g.canvas.width = g.imageWidth;
+	g.canvas.height = g.imageHeight;
+	//ut.el('section.canvas').appendChild(g.canvas);
 
 	checkSetTheme();
 	initUpload();
@@ -24,11 +28,16 @@ function init() {
 		let padRight = parseFloat(style.paddingRight) || 0;
 		let sectionW = section.offsetWidth - padLeft - padRight;
 		let w = Math.min(sectionW, maxW);
-		let h = Math.min(sectionW, maxW); // keep square aspect ratio
-		preview.style.width = w + 'px';
-		preview.style.height = h + 'px';
-		g.imageWidth = w;
-		g.imageHeight = h;
+		let scale = w / maxW;
+		// Use transform to scale the container instead of changing width/height
+		preview.style.transform = `scale(${scale})`;
+		preview.style.transformOrigin = 'top left';
+		// Keep original dimensions for consistent logic
+		preview.style.width = maxW + 'px';
+		preview.style.height = maxH + 'px';
+		preview.style.marginBottom = -maxH * (1 - scale) + 'px';
+		g.imageWidth = maxW;
+		g.imageHeight = maxH;
 	}
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
@@ -83,6 +92,7 @@ function placeImagePreview(img) {
 
 	// Initial fit-to-reference
 	function applyInitialTransform() {
+		g.img = img.cloneNode(true);
 		let iW = img.naturalWidth;
 		let iH = img.naturalHeight;
 		ut.log(`Image size: ${iW}x${iH}, Reference size: ${refW}x${refH}`);
@@ -297,36 +307,8 @@ function placeImagePreview(img) {
 }
 
 function uploadImage() {
-	// Save current preview size
-	let preview = ut.el('.image-preview');
-	let prevW = preview.style.width;
-	let prevH = preview.style.height;
-	// Set preview to max size for export
-	let maxW = g.cssVars['--image-width']?.computed || 800;
-	let maxH = g.cssVars['--image-height']?.computed || 600;
-	preview.style.width = maxW + 'px';
-	preview.style.height = maxH + 'px';
-	// Update global size
-	g.imageWidth = maxW;
-	g.imageHeight = maxH;
-
-	// Generate cropped image
-	let img = g.imagePreviewContainer.querySelector('img');
-	let cropSize = { width: maxW, height: maxH };
-	let imgDataUrl = generateCroppedImage(img, g.lastScale, g.lastPos, cropSize);
-
-	// Restore preview size
-	preview.style.width = prevW;
-	preview.style.height = prevH;
-	// Restore global size
-	let section = ut.el('main > section');
-	let style = window.getComputedStyle(section);
-	let padLeft = parseFloat(style.paddingLeft) || 0;
-	let padRight = parseFloat(style.paddingRight) || 0;
-	let sectionW = section.offsetWidth - padLeft - padRight;
-	g.imageWidth = Math.min(sectionW, maxW);
-	g.imageHeight = Math.min(sectionW, maxW);
-
+	generateCroppedImage(g.img, g.lastScale, g.lastPos, {width: g.imageWidth, height: g.imageHeight});
+	let imgDataUrl = g.canvas.toDataURL('image/jpeg', 0.92);
 	let win = window.open();
 	if (win) {
 		win.document.write(/*html*/`
@@ -343,36 +325,26 @@ function uploadImage() {
 
 // Generate a cropped image from the preview using canvas
 function generateCroppedImage(img, scale, pos, cropSize) {
-	// cropSize: { width, height } in pixels (output size)
-	let canvas = document.createElement('canvas');
+	let canvas = g.canvas;
 	canvas.width = cropSize.width;
 	canvas.height = cropSize.height;
 	let ctx = canvas.getContext('2d');
 
-	// Draw blank black canvas first
+
 	ctx.fillStyle = '#000';
 	ctx.fillRect(0, 0, cropSize.width, cropSize.height);
 
-	// Draw the image exactly as positioned and scaled in the preview
+
 	let iW = img.naturalWidth;
 	let iH = img.naturalHeight;
 	scale = Math.max(0.0001, scale); // avoid div by zero
 
-	// The image in the preview is transformed by pos and scale
-	// We want to draw the image at the same offset and scale on the canvas
-	// The canvas is the same size as the preview
-	// So: drawImage(img, dx, dy, dw, dh)
-	// dx = pos.x, dy = pos.y, dw = iW * scale, dh = iH * scale
-	// If part of the image is outside the canvas, it will be clipped, and the background will show
 	ctx.save();
 	ctx.beginPath();
 	ctx.rect(0, 0, cropSize.width, cropSize.height);
 	ctx.clip();
 	ctx.drawImage(img, pos.x, pos.y, iW * scale, iH * scale);
 	ctx.restore();
-
-	let out = canvas.toDataURL('image/jpeg', 0.92); // 0.92 is a good default quality
-	return out;
 }
 
 function checkSetTheme() {

@@ -77,6 +77,11 @@ main {
 	flex: 1;
 	padding: 0;
 }
+section > canvas {
+	transform-origin: top left;
+	transform: scale(0.3, 0.3);
+	border-radius: 50%;
+}
 
 main>section {
 	max-width: var(--space-max-width);
@@ -148,6 +153,11 @@ input[type="file"]::file-selector-button:focus-visible {
 	width: var(--image-width);
 	height: var(--image-height);
 }
+
+section > .controls {
+	max-width: var(--image-width);
+}
+
 
 .image-preview-container {
 	position: relative;
