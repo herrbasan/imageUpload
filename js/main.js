@@ -6,48 +6,22 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init() {
 	g.imagePreviewContainer = ut.el('.image-preview-container');
-	g.cssVars = ut.getCssVars();
-	g.imageWidth = g.cssVars['--image-width']?.computed || 800;
-	g.imageHeight = g.cssVars['--image-height']?.computed || 600;
+	g.imageWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')) || 256;
+	g.imageHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')) || 256;
 	g.canvas = document.createElement('canvas');
 	g.canvas.width = g.imageWidth;
 	g.canvas.height = g.imageHeight;
 	//ut.el('section.canvas').appendChild(g.canvas);
-
 	checkSetTheme();
-	initUpload();
+	initApp();
 
-	// Responsive resize logic
-	function resizePreviewContainer() {
-		let section = ut.el('main > section');
-		let preview = ut.el('.image-preview');
-		let maxW = g.cssVars['--image-width']?.computed || 800;
-		let maxH = g.cssVars['--image-height']?.computed || 600;
-		let style = window.getComputedStyle(section);
-		let padLeft = parseFloat(style.paddingLeft) || 0;
-		let padRight = parseFloat(style.paddingRight) || 0;
-		let sectionW = section.offsetWidth - padLeft - padRight;
-		let w = Math.min(sectionW, maxW);
-		let scale = w / maxW;
-		// Use transform to scale the container instead of changing width/height
-		preview.style.transform = `scale(${scale})`;
-		preview.style.transformOrigin = 'top left';
-		// Keep original dimensions for consistent logic
-		preview.style.width = maxW + 'px';
-		preview.style.height = maxH + 'px';
-		preview.style.marginBottom = -maxH * (1 - scale) + 'px';
-		g.imageWidth = maxW;
-		g.imageHeight = maxH;
-	}
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
 	
-	ut.log(g.cssVars);
-
 	ut.el('#upload-button').addEventListener('click', uploadImage);
 }
 
-function initUpload() {
+function initApp() {
 	placeImagePreview(randomUnsplashPortrait());
 	let uploadInput = ut.el('#image-upload');
 	uploadInput.addEventListener('change', handleFileSelect);
@@ -77,8 +51,8 @@ function placeImagePreview(img) {
 	g.imagePreviewContainer.appendChild(img);
 
 	// Always use reference size for transforms
-	let refW = g.cssVars['--image-width']?.computed || 800;
-	let refH = g.cssVars['--image-height']?.computed || 800;
+	let refW = g.imageWidth;
+	let refH = g.imageHeight;
 	let scale = 1;
 	let pos = { x: 0, y: 0 };
 	g.lastScale = scale;
@@ -306,6 +280,29 @@ function placeImagePreview(img) {
 	}
 }
 
+// Responsive resize logic
+function resizePreviewContainer() {
+	let section = ut.el('main > section');
+	let preview = ut.el('.image-preview');
+	let maxW = g.imageWidth || 800;
+	let maxH = g.imageHeight || 600;
+	let style = window.getComputedStyle(section);
+	let padLeft = parseFloat(style.paddingLeft) || 0;
+	let padRight = parseFloat(style.paddingRight) || 0;
+	let sectionW = section.offsetWidth - padLeft - padRight;
+	let w = Math.min(sectionW, maxW);
+	let scale = w / maxW;
+	// Use transform to scale the container instead of changing width/height
+	preview.style.transform = `scale(${scale})`;
+	preview.style.transformOrigin = 'top left';
+	// Keep original dimensions for consistent logic
+	preview.style.width = maxW + 'px';
+	preview.style.height = maxH + 'px';
+	preview.style.marginBottom = -maxH * (1 - scale) + 'px';
+	//g.imageWidth = maxW;
+	//g.imageHeight = maxH;
+}
+
 function uploadImage() {
 	generateCroppedImage(g.img, g.lastScale, g.lastPos, {width: g.imageWidth, height: g.imageHeight});
 	let imgDataUrl = g.canvas.toDataURL('image/jpeg', 0.92);
@@ -397,128 +394,5 @@ function initUtilities() {
 	utils.killKids = function (_el) { _el = utils.el(_el); while (_el?.firstChild) { _el.removeChild(_el.firstChild); } }
 	utils.killMe = function (_el) { _el = utils.el(_el); if (_el?.parentNode) { _el.parentNode.removeChild(_el); } }
 	utils.log = console.log.bind(console);
-
-	utils.getCssVars = function(el = document.styleSheets) {
-		let out = {};
-		let names = getCssVarNames(el);
-		for (let i = 0; i < names.length; i++) {
-			out[names[i]] = utils.getCssVar(names[i]);
-		}
-		return out;
-	}
-
-	utils.getCssVar = function(prop, el) {
-		if (!el) { el = document.body }
-		let s = getComputedStyle(el).getPropertyValue(prop).trim();
-		let unit = false;
-		let value = s;
-		let computed = false;
-		let absolute_units = ['cm', 'mm', 'Q', 'in', 'pc', 'pt', 'px'];
-		let relative_units = ['%', 'rem', 'em', 'ex', 'ch', 'lh', 'rlh', 'svw', 'svh', 'dvw', 'dvh', 'lvw', 'lvh', 'vw', 'vh', 'vmin', 'vmax', 'vb', 'vi'];
-		let isAbsolute = false;
-
-		if (!isNaN(s)) { return { value: Number(s), unit: 'number', absolute: true, computed: Number(s) } }
-
-		for (let i = 0; i < absolute_units.length; i++) {
-			let item = absolute_units[i];
-			if (s.substr(s.length - item.length, item.length) == item && !s.includes('vmin')) {
-				let t = Number(s.substr(0, s.length - item.length));
-				if (!isNaN(t)) {
-					value = t;
-					computed = value;
-					unit = item;
-					isAbsolute = true;
-					break;
-				}
-			}
-		}
-		if (!isAbsolute) {
-			for (let i = 0; i < relative_units.length; i++) {
-				let item = relative_units[i];
-				if (s.substr(s.length - item.length, item.length) == item) {
-					value = Number(s.substr(0, s.length - item.length));
-					unit = item;
-					if (item == 'em' || item == 'rem') {
-						let base = ut.getCssVar('font-size', el).value;
-						computed = Math.round(value * base);
-					}
-					else if (item == 'vw' || item == '%') {
-						value = value / 100;
-						computed = Math.round(value * window.innerWidth);
-					}
-					else if (item == 'vh') {
-						value = value / 100;
-						computed = Math.round(value * window.innerHeight);
-					}
-					else if (item == 'vmin' || item == 'vmax') {
-						value = value / 100;
-						let side = window.innerWidth;
-						if (window.innerHeight > window.innerWidth) {
-							side = window.innerHeight;
-						}
-						computed = Math.round(value * side);
-					}
-					break;
-				}
-			}
-		}
-		if (!unit) {
-			let c = utils.parseCSSColor(s);
-			if (c) {
-				unit = 'rgba';
-				isAbsolute = true;
-				computed = c;
-			}
-		}
-		return { value: value, unit: unit, absolute: isAbsolute, computed: computed };
-	}
-
-	utils.setCssVar = function(s, val) {
-		document.documentElement.style.setProperty(s, val);
-	}
-
-	utils.cssColorString = function(ar) {
-		if (ar.length > 3) {
-			return `rgba(${ar[0]},${ar[1]},${ar[2]},${ar[3]})`
-		}
-		return `rgb(${ar[0]},${ar[1]},${ar[2]})`
-	}
-
-	function getCssVarNames(el = document.styleSheets) {
-		var cssVars = [];
-		for (var i = 0; i < el.length; i++) {
-			try {
-				for (var j = 0; j < el[i].cssRules.length; j++) {
-					try {
-						for (var k = 0; k < el[i].cssRules[j].style.length; k++) {
-							let name = el[i].cssRules[j].style[k];
-							if (name.startsWith('--') && cssVars.indexOf(name) == -1) {
-								cssVars.push(name);
-							}
-						}
-					} catch (error) { }
-				}
-			} catch (error) { }
-		}
-		return cssVars;
-	}
-
-	utils.parseCSSColor = function(color) {
-		var cache,
-			p = parseInt,
-			color = color.replace(/\s/g, '');
-		if (cache = /#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/.exec(color))
-			cache = [p(cache[1], 16), p(cache[2], 16), p(cache[3], 16)];
-		else if (cache = /#([\da-fA-F])([\da-fA-F])([\da-fA-F])/.exec(color))
-			cache = [p(cache[1], 16) * 17, p(cache[2], 16) * 17, p(cache[3], 16) * 17];
-		else if (cache = /rgba\(([\d]+),([\d]+),([\d]+),([\d]+|[\d]*.[\d]+)\)/.exec(color))
-			cache = [+cache[1], +cache[2], +cache[3], +cache[4]];
-		else if (cache = /rgb\(([\d]+),([\d]+),([\d]+)\)/.exec(color))
-			cache = [+cache[1], +cache[2], +cache[3]];
-		else return false;
-
-		isNaN(cache[3]) && (cache[3] = 1);
-		return cache;
-	}
 	return utils;
 }
