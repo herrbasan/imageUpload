@@ -118,6 +118,7 @@ header {
 	padding: var(--space-padding);
 	text-align: center;
 	box-shadow: var(--color-header-shadow);
+	border-bottom: thin solid var(--border-color);
 	position: sticky;
 	top: 0;
 	z-index: 100;
@@ -137,6 +138,8 @@ footer {
 	padding: var(--space-padding) 0;
 	background: var(--color-header-bg);
 	color: var(--color-header-text);
+	border-top: thin solid var(--border-color);
+	box-shadow: var(--color-header-shadow);
 }
 
 .card {
