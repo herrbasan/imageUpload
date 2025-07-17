@@ -18,6 +18,7 @@ function init() {
 	g.MAX_ZOOM = 2.5;
 	g.MIN_ZOOM = 0.05;
 	g.MOUSEWHEEL_ZOOM_STEP = 0.05;
+	g.KEYBOARD_PAN_STEP = 40; // pixels per key press
 
 	ut.el('section.canvas').appendChild(g.canvas);
 	checkSetTheme();
@@ -128,6 +129,8 @@ function initTransformEvents(img) {
 	}
 
 	if (img.zoomSlider) {
+		img.zoomSlider.min = g.MIN_ZOOM;
+		img.zoomSlider.max = g.MAX_ZOOM;
 		img.zoomSlider.addEventListener('input', function() {
 			let prevScale = img.scale;
 			let nextScale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, Number(img.zoomSlider.value)));
@@ -250,10 +253,10 @@ function initTransformEvents(img) {
 	}
 
 	// Keyboard pan support when container is focused
-	let previewContainer = g.imagePreviewContainer;
-	if (previewContainer) {
-		previewContainer.addEventListener('keydown', function(e) {
-			let panStep = 20 * img.scale; // step size relative to current scale
+	
+	if (g.imagePreviewContainer) {
+		g.imagePreviewContainer.addEventListener('keydown', function(e) {
+			let panStep = g.KEYBOARD_PAN_STEP * img.scale; // step size relative to current scale
 			let moved = false;
 			switch (e.key) {
 				case 'ArrowLeft':
