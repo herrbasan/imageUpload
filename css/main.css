@@ -3,10 +3,13 @@
 	--size-base: 16px;
 	--color-bg: rgb(240, 240, 230);
 	--color-text: rgb(34, 34, 34);
+	--color-text-highlight: var(--accent-color);
+	--color-text-secondary: rgb(147, 147, 147);
 
 	--color-header-bg: rgb(150, 150, 150);
 	--color-header-text: rgb(255, 255, 255);
 	--color-header-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	--color-footer-bg: rgb(220, 220, 220);
 	--color-btn-bg: rgb(240, 240, 240);
 	--color-btn-text: rgb(34, 34, 34);
 	--color-btn-hover-bg: rgb(100, 100, 100);
@@ -14,7 +17,7 @@
 	--color-slider-bg: rgb(150, 150, 150);
 	--color-slider-thumb: var(--color-btn-text);
 	--color-slider-thumb-active: var(--accent-color);
-	--space-max-width: 60rem;
+	--space-max-width: 980px;
 
 	--space-padding: calc(var(--size-base)*0.7);
 	--space-padding-quarter: calc(var(--space-padding) * 0.25);
@@ -32,7 +35,7 @@
 	--image-height: 512px;
 	--mask-circle-size: 100%;
 	--drop-shadow: 0 0.1rem 0.7rem rgba(0, 0, 0, 0.15);
-	--accent-color: #0b57a8;
+	--accent-color: rgb(11, 87, 168);
 
 	--card-bg: rgb(255, 255, 255);
 	--card-border: none;
@@ -52,6 +55,7 @@
 	--color-btn-bg: rgb(75, 75, 75);
 	--color-btn-text: rgb(224, 224, 224);
 	--color-btn-hover-bg: rgb(60, 65, 75);
+	--color-footer-bg: rgb(50, 50, 50);
 	
 	--drop-shadow: 0 0.1rem 0.7rem rgba(0, 0, 0, 0.2);
 	--accent-color: #2e90fa;
@@ -85,6 +89,19 @@ body {
 	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+hr {
+	border: none;
+	border-top: thin solid var(--border-color);
+	margin-top: var(--space-padding);
+	margin-bottom: var(--space-padding);
+}
+
+a {
+	color: var(--color-text-highlight);
+	text-decoration: none;
+	transition: color 0.2s;
+}
+
 *:focus-visible,
 button:focus-visible {
 	outline: var(--focus-outline);
@@ -96,16 +113,7 @@ main {
 	padding-top: var(--space-padding);
 }
 
-.canvas_preview canvas {
-	box-sizing: content-box;
-	display: block;
-	width: 10rem;
-	height: 10rem;
-	border-radius: 50%;
-}
-
-
-main>section {
+section {
 	max-width: var(--space-max-width);
 	margin-left: auto;
 	margin-right: auto;
@@ -134,14 +142,20 @@ header h1 {
 }
 
 footer {
-	text-align: center;
-	padding: var(--space-padding) 0;
-	background: var(--color-header-bg);
-	color: var(--color-header-text);
+	height: auto;
+	text-align: right;
+	padding: var(--space-padding);
+	background: var(--color-footer-bg);
 	border-top: thin solid var(--border-color);
-	box-shadow: var(--color-header-shadow);
 }
 
+
+
+.col2 {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: var(--space-padding);
+}
 .card {
 	background: var(--card-bg);
 	border: var(--card-border);
@@ -150,6 +164,56 @@ footer {
 	padding: var(--card-padding);
 	margin-bottom: var(--space-padding-double);
 }
+
+.canvas_preview canvas {
+	box-sizing: content-box;
+	display: block;
+	width: 6rem;
+	height: 6rem;
+	border-radius: 50%;
+	border: 0.1rem solid var(--color-text);
+	filter: drop-shadow(var(--drop-shadow));
+}
+
+@media screen and (max-width: 880px) {
+  .col2 {
+		display: block;
+	}
+}
+
+.demo-profile {
+	display: flex;
+	align-items: center;
+	gap: var(--space-padding-double);
+}
+
+.demo-profile .name {
+	font-weight: 200;
+	font-size: 1.4rem;
+}
+
+.demo-profile .email {
+	font-size: 0.9rem;
+	color: var(--color-text-secondary);
+}
+
+.upload-controls {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--space-padding);
+}
+
+.upload-controls .upload-button {
+	background-color: rgb(55, 144, 76);
+	color: white;
+	height: 2.5rem;
+	width: 10rem;
+}
+
+.upload-controls .upload-button:hover {
+	background-color: rgb(63, 211, 98);
+}
+
 
 button,
 input[type="file"]::file-selector-button {
@@ -209,6 +273,9 @@ input[type="file"]::file-selector-button{
 	display: none;
 }
 
+.image-preview-wrapper .image-preview {
+	margin: auto;
+}
 
 .image-preview-wrapper .image-preview {
 	box-sizing: content-box;
@@ -266,8 +333,9 @@ input[type="file"]::file-selector-button{
 .image-preview-wrapper > .controls {
 	max-width: var(--image-width);
 	display: flex;
-	margin-top: var(--space-padding);
 	gap: var(--space-padding-half);
+	margin: auto;
+	margin-top: var(--space-padding);
 }
 
 .image-preview-wrapper .controls .button-container {
@@ -288,15 +356,6 @@ input[type="file"]::file-selector-button{
 .zoom-slider label {
 	font-size: 0.9rem;
 	margin-right: var(--space-padding);
-}
-
-.upload-button {
-	background-color: rgb(55, 144, 76);
-	color: white;
-}
-
-.upload-button:hover {
-	background-color: rgb(63, 211, 98);
 }
 
 .sr-only {
