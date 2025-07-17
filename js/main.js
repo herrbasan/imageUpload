@@ -8,10 +8,19 @@ function init() {
 	g.imagePreviewContainer = ut.el('.image-preview-container');
 	g.imageWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')) || 256;
 	g.imageHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')) || 256;
+	
 	g.canvas = document.createElement('canvas');
 	g.canvas.width = g.imageWidth;
 	g.canvas.height = g.imageHeight;
-	//ut.el('section.canvas').appendChild(g.canvas);
+	g.ctx = g.canvas.getContext('2d');
+
+	g.MAX_ZOOM = 2.5;
+	g.MIN_ZOOM = 0.05;
+	g.MOUSEWHEEL_ZOOM_STEP = 0.05;
+
+	
+
+	ut.el('section.canvas').appendChild(g.canvas);
 	checkSetTheme();
 	initApp();
 
@@ -49,125 +58,117 @@ function placeImagePreview(img) {
 	img.style.transformOrigin = 'top left';
 	ut.killKids(g.imagePreviewContainer);
 	g.imagePreviewContainer.appendChild(img);
+	g.currentImage = img;
+	img.scale = 1;
+	img.pos = { x: 0, y: 0 };
+	img.start = { x: 0, y: 0 };
+	img.dragging = false;
+	img.rafId = null;
+	img.last = { x: img.pos.x, y: img.pos.y, scale: img.scale };
+	
+	g.lastScale = img.scale;
+	g.lastPos = img.pos;
 
-	// Always use reference size for transforms
-	let refW = g.imageWidth;
-	let refH = g.imageHeight;
-	let scale = 1;
-	let pos = { x: 0, y: 0 };
-	g.lastScale = scale;
-	g.lastPos = pos;
-	let start = { x: 0, y: 0 };
-	let dragging = false;
-	let rafId = null;
-	let last = { x: pos.x, y: pos.y, scale: scale };
-	const MIN_ZOOM = 0.05;
-	const MAX_ZOOM = 2.5;
+	img.resetBtn = ut.el('#reset-image');
+	img.zoomSlider = ut.el('#zoom-slider');
 
-	// Initial fit-to-reference
-	function applyInitialTransform() {
+	img.onload = function() {
 		g.img = img.cloneNode(true);
-		let iW = img.naturalWidth;
-		let iH = img.naturalHeight;
-		ut.log(`Image size: ${iW}x${iH}, Reference size: ${refW}x${refH}`);
-		if (iW && iH && refW && refH) {
-			let scaleW = refW / iW;
-			let scaleH = refH / iH;
-			ut.log(`Initial scale: ${scaleW} (width), ${scaleH} (height)`);
-			scale = Math.min(scaleW, scaleH);
-			scale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale));
-			pos.x = (refW - iW * scale) / 2;
-			pos.y = (refH - iH * scale) / 2;
-			setTransform();
+		initTransformEvents(img);
+		applyInitialTransform();
+	};
+
+}
+
+function setTransform() {
+	if (!g.currentImage) return;
+	let img = g.currentImage;
+	img.scale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, img.scale));
+	if (img.pos.x === img.last.x && img.pos.y === img.last.y && img.scale === img.last.scale) return;
+	if (img.transformQueued) return;
+	img.transformQueued = true;
+	requestAnimationFrame(() => {
+		img.last.x = img.pos.x;
+		img.last.y = img.pos.y;
+		img.last.scale = img.scale;
+		img.style.transform = `translate(${img.pos.x}px, ${img.pos.y}px) scale(${img.scale})`;
+		if (img.zoomSlider && Number(img.zoomSlider.value) !== img.scale) {
+			img.zoomSlider.value = img.scale;
 		}
-	}
-	img.onload = applyInitialTransform;
-
-	// When container is resized, only update visual size, not transform logic
-	window.addEventListener('resize', () => {
-		let preview = ut.el('.image-preview');
-		let section = ut.el('main > section');
-		let style = window.getComputedStyle(section);
-		let padLeft = parseFloat(style.paddingLeft) || 0;
-		let padRight = parseFloat(style.paddingRight) || 0;
-		let sectionW = section.offsetWidth - padLeft - padRight;
-		let w = Math.min(sectionW, refW);
-		preview.style.width = w + 'px';
-		preview.style.height = w + 'px';
+		// Store current transform globally for cropping
+		g.lastScale = img.scale;
+		g.lastPos = { x: img.pos.x, y: img.pos.y };
+		img.transformQueued = false;
 	});
+}
 
-	// Reset button handler
-	let resetBtn = ut.el('#reset-image');
-	if (resetBtn) {
-		resetBtn.onclick = function() {
+function applyInitialTransform() {
+	if(!g.currentImage) return;
+	let img = g.currentImage;
+	let iW = img.naturalWidth;
+	let iH = img.naturalHeight;
+	ut.log(`Image size: ${iW}x${iH}, Reference size: ${g.imageWidth}x${g.imageHeight}`);
+	if (iW && iH && g.imageWidth && g.imageHeight) {
+		let scaleW = g.imageWidth / iW;
+		let scaleH = g.imageHeight / iH;
+		ut.log(`Initial scale: ${scaleW} (width), ${scaleH} (height)`);
+		img.scale = Math.min(scaleW, scaleH);
+		img.scale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, img.scale));
+		img.pos.x = (g.imageWidth - iW * img.scale) / 2;
+		img.pos.y = (g.imageHeight - iH * img.scale) / 2;
+		setTransform();
+		interActionFinished();
+	}
+}
+
+function initTransformEvents(img) {
+	if (img.resetBtn) {
+		img.resetBtn.onclick = function() {
 			applyInitialTransform();
 		};
 	}
 
-	let zoomSlider = ut.el('#zoom-slider');
-	let transformQueued = false;
-	function setTransform() {
-		scale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale));
-		if (pos.x === last.x && pos.y === last.y && scale === last.scale) return;
-		if (transformQueued) return;
-		transformQueued = true;
-		requestAnimationFrame(() => {
-			last.x = pos.x;
-			last.y = pos.y;
-			last.scale = scale;
-			img.style.transform = `translate(${pos.x}px, ${pos.y}px) scale(${scale})`;
-			if (zoomSlider && Number(zoomSlider.value) !== scale) {
-				zoomSlider.value = scale;
-			}
-			// Store current transform globally for cropping
-			g.lastScale = scale;
-			g.lastPos = { x: pos.x, y: pos.y };
-			transformQueued = false;
-		});
-	}
-
-	if (zoomSlider) {
-		zoomSlider.max = MAX_ZOOM;
-		zoomSlider.min = MIN_ZOOM;
-		zoomSlider.addEventListener('input', function() {
-			let prevScale = scale;
-			let nextScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Number(zoomSlider.value)));
+	if (img.zoomSlider) {
+		img.zoomSlider.addEventListener('input', function() {
+			let prevScale = img.scale;
+			let nextScale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, Number(img.zoomSlider.value)));
 			// Center image in reference container when zooming
-			let centerX = refW / 2;
-			let centerY = refH / 2;
-			let imgCenterX = (centerX - pos.x) / prevScale;
-			let imgCenterY = (centerY - pos.y) / prevScale;
-			pos.x -= (imgCenterX * (nextScale - prevScale));
-			pos.y -= (imgCenterY * (nextScale - prevScale));
-			scale = nextScale;
+			let centerX = g.imageWidth / 2;
+			let centerY = g.imageHeight / 2;
+			let imgCenterX = (centerX - img.pos.x) / prevScale;
+			let imgCenterY = (centerY - img.pos.y) / prevScale;
+			img.pos.x -= (imgCenterX * (nextScale - prevScale));
+			img.pos.y -= (imgCenterY * (nextScale - prevScale));
+			img.scale = nextScale;
 			setTransform();
 		});
 	}
 
 	img.addEventListener('wheel', function(e) {
 		e.preventDefault();
-		let prevScale = scale;
-		let baseStep = 0.05;
-		let step = baseStep * scale;
+		let prevScale = img.scale;
+		let baseStep = g.MOUSEWHEEL_ZOOM_STEP;
+		let step = baseStep * img.scale;
 		let delta = e.deltaY > 0 ? -step : step;
-		let nextScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale + delta));
+		let nextScale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, img.scale + delta));
 		// Center image in reference container
-		let centerX = refW / 2;
-		let centerY = refH / 2;
-		let imgCenterX = (centerX - pos.x) / prevScale;
-		let imgCenterY = (centerY - pos.y) / prevScale;
-		pos.x -= (imgCenterX * (nextScale - prevScale));
-		pos.y -= (imgCenterY * (nextScale - prevScale));
-		scale = nextScale;
+		let centerX = g.imageWidth / 2;
+		let centerY = g.imageHeight / 2;
+		let imgCenterX = (centerX - img.pos.x) / prevScale;
+		let imgCenterY = (centerY - img.pos.y) / prevScale;
+		img.pos.x -= (imgCenterX * (nextScale - prevScale));
+		img.pos.y -= (imgCenterY * (nextScale - prevScale));
+		img.scale = nextScale;
 		setTransform();
+		interActionFinished();
 	}, { passive: false });
 
 	img.addEventListener('mousedown', function(e) {
 		e.preventDefault();
-		dragging = true;
+		img.dragging = true;
 		img.style.cursor = 'grabbing';
-		start.x = e.clientX - pos.x;
-		start.y = e.clientY - pos.y;
+		img.start.x = e.clientX - img.pos.x;
+		img.start.y = e.clientY - img.pos.y;
 		document.body.style.userSelect = 'none';
 	});
 
@@ -175,25 +176,28 @@ function placeImagePreview(img) {
 	document.addEventListener('mouseup', onUp);
 
 	function onMove(e) {
-		if (!dragging) return;
-		pos.x = e.clientX - start.x;
-		pos.y = e.clientY - start.y;
+		if (!img.dragging) return;
+		interActionStarted();
+		img.pos.x = e.clientX - img.start.x;
+		img.pos.y = e.clientY - img.start.y;
 		setTransform();
 	}
 
 	function onUp() {
-		dragging = false;
+		img.dragging = false;
 		img.style.cursor = 'grab';
 		document.body.style.userSelect = '';
+		interActionFinished();
 	}
 
 	// Touch support (improved pinch/zoom logic)
 	let lastTouch = null;
 	let pinchStart = null;
 	img.addEventListener('touchstart', function(e) {
+		interActionStarted();
 		if (e.touches.length === 1) {
-			dragging = true;
-			lastTouch = { x: e.touches[0].clientX - pos.x, y: e.touches[0].clientY - pos.y };
+			img.dragging = true;
+			lastTouch = { x: e.touches[0].clientX - img.pos.x, y: e.touches[0].clientY - img.pos.y };
 			img.style.cursor = 'grabbing';
 		} else if (e.touches.length === 2) {
 			let rect = img.getBoundingClientRect();
@@ -201,26 +205,27 @@ function placeImagePreview(img) {
 			let cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 			pinchStart = {
 				dist: getTouchDist(e.touches),
-				scale: scale,
+				scale: img.scale,
 				center: {
-					x: (cx - rect.left) / scale,
-					y: (cy - rect.top) / scale
+					x: (cx - rect.left) / img.scale,
+					y: (cy - rect.top) / img.scale
 				},
-				pos: { x: pos.x, y: pos.y },
+				pos: { x: img.pos.x, y: img.pos.y },
 				screenCenter: { x: cx, y: cy }
 			};
 		}
 	}, { passive: false });
 
 	img.addEventListener('touchmove', function(e) {
+		interActionStarted();
 		e.preventDefault();
-		if (e.touches.length === 1 && dragging) {
-			pos.x = e.touches[0].clientX - lastTouch.x;
-			pos.y = e.touches[0].clientY - lastTouch.y;
+		if (e.touches.length === 1 && img.dragging) {
+			img.pos.x = e.touches[0].clientX - lastTouch.x;
+			img.pos.y = e.touches[0].clientY - lastTouch.y;
 			setTransform();
 		} else if (e.touches.length === 2 && pinchStart) {
 			let newDist = getTouchDist(e.touches);
-			let nextScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchStart.scale * (newDist / pinchStart.dist)));
+			let nextScale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, pinchStart.scale * (newDist / pinchStart.dist)));
 			let rect = img.getBoundingClientRect();
 			let cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
 			let cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -228,18 +233,19 @@ function placeImagePreview(img) {
 			let dx = cx - pinchStart.screenCenter.x;
 			let dy = cy - pinchStart.screenCenter.y;
 			// Keep pinch center fixed and allow panning
-			pos.x = pinchStart.pos.x - (pinchStart.center.x * (nextScale - pinchStart.scale)) + dx;
-			pos.y = pinchStart.pos.y - (pinchStart.center.y * (nextScale - pinchStart.scale)) + dy;
-			scale = nextScale;
+			img.pos.x = pinchStart.pos.x - (pinchStart.center.x * (nextScale - pinchStart.scale)) + dx;
+			img.pos.y = pinchStart.pos.y - (pinchStart.center.y * (nextScale - pinchStart.scale)) + dy;
+			img.scale = nextScale;
 			setTransform();
 		}
 	}, { passive: false });
 
 	img.addEventListener('touchend', function(e) {
-		dragging = false;
+		img.dragging = false;
 		img.style.cursor = 'grab';
 		lastTouch = null;
 		pinchStart = null;
+		interActionFinished();
 	}, { passive: false });
 
 	function getTouchDist(touches) {
@@ -252,32 +258,43 @@ function placeImagePreview(img) {
 	let previewContainer = g.imagePreviewContainer;
 	if (previewContainer) {
 		previewContainer.addEventListener('keydown', function(e) {
-			let panStep = 20 * scale; // step size relative to current scale
+			let panStep = 20 * img.scale; // step size relative to current scale
 			let moved = false;
 			switch (e.key) {
 				case 'ArrowLeft':
-					pos.x -= panStep;
+					img.pos.x -= panStep;
 					moved = true;
 					break;
 				case 'ArrowRight':
-					pos.x += panStep;
+					img.pos.x += panStep;
 					moved = true;
 					break;
 				case 'ArrowUp':
-					pos.y -= panStep;
+					img.pos.y -= panStep;
 					moved = true;
 					break;
 				case 'ArrowDown':
-					pos.y += panStep;
+					img.pos.y += panStep;
 					moved = true;
 					break;
 			}
 			if (moved) {
 				setTransform();
+				interActionFinished();
 				e.preventDefault();
 			}
 		});
 	}
+}
+
+function interActionStarted() {
+	if (!g.currentImage) return;
+	clearTimeout(g.currentImage.canvasTimeout);
+	g.currentImage.canvasTimeout = null;
+}
+
+function interActionFinished() {
+	updateCroppedImage();
 }
 
 // Responsive resize logic
@@ -299,8 +316,8 @@ function resizePreviewContainer() {
 	preview.style.width = maxW + 'px';
 	preview.style.height = maxH + 'px';
 	preview.style.marginBottom = -maxH * (1 - scale) + 'px';
-	//g.imageWidth = maxW;
-	//g.imageHeight = maxH;
+
+	updateCroppedImage();
 }
 
 function uploadImage() {
@@ -320,14 +337,18 @@ function uploadImage() {
 	}
 }
 
+function updateCroppedImage() {
+	if (!g.currentImage) return;
+	let img = g.currentImage;
+	clearTimeout(img.canvasTimeout);
+	img.canvasTimeout = setTimeout(() => {
+		generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
+	}, 500);
+}
 // Generate a cropped image from the preview using canvas
 function generateCroppedImage(img, scale, pos, cropSize) {
-	let canvas = g.canvas;
-	canvas.width = cropSize.width;
-	canvas.height = cropSize.height;
-	let ctx = canvas.getContext('2d');
-
-
+	
+	let ctx = g.ctx;
 	ctx.fillStyle = '#000';
 	ctx.fillRect(0, 0, cropSize.width, cropSize.height);
 
@@ -336,7 +357,7 @@ function generateCroppedImage(img, scale, pos, cropSize) {
 	let iH = img.naturalHeight;
 	scale = Math.max(0.0001, scale); // avoid div by zero
 
-	ctx.save();
+	//ctx.save();
 	ctx.beginPath();
 	ctx.rect(0, 0, cropSize.width, cropSize.height);
 	ctx.clip();
