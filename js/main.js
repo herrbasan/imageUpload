@@ -308,6 +308,7 @@ function resizePreviewContainer() {
 	let maxW = g.imageWidth;
 	let maxH = g.imageHeight;
 	let style = window.getComputedStyle(container);
+	let padTop = parseFloat(style.paddingTop) || 0;
 	let padLeft = parseFloat(style.paddingLeft) || 0;
 	let padRight = parseFloat(style.paddingRight) || 0;
 	let containerW = container.offsetWidth - padLeft - padRight;
@@ -321,7 +322,7 @@ function resizePreviewContainer() {
 	//preview.style.width = maxW + 'px';
 	//preview.style.height = maxH + 'px';
 	preview.style.marginBottom = -maxH * (1 - scale) + 'px';
-	preview.style.marginLeft = -(padLeft * scale) + 'px';
+
 
 	updateCroppedImage();
 }

@@ -1,7 +1,7 @@
 /* Light theme (default) */
 :root {
-	--size-base: 1.1rem;
-	--color-bg: rgb(255, 255, 255);
+	--size-base: 16px;
+	--color-bg: rgb(240, 240, 230);
 	--color-text: rgb(34, 34, 34);
 
 	--color-header-bg: rgb(150, 150, 150);
@@ -31,15 +31,21 @@
 	--image-width: 512px;
 	--image-height: 512px;
 	--mask-circle-size: 100%;
-	--drop-shadow: 0 0.1rem 0.5rem rgba(0, 0, 0, 0.2);
+	--drop-shadow: 0 0.1rem 0.7rem rgba(0, 0, 0, 0.15);
 	--accent-color: #0b57a8;
+
+	--card-bg: rgb(255, 255, 255);
+	--card-border: none;
+	--card-radius: var(--space-padding-half);
+	--card-drop-shadow: var(--drop-shadow);
+	--card-padding: var(--space-padding);
 }
 
 :root[data-theme="dark"] {
-	--color-bg: rgb(50, 50, 50);
+	--color-bg: rgb(45, 45, 45);
 	--color-text: rgb(200, 200, 200);
 
-	--border-color:rgb(90, 90, 90);
+	--border-color:rgb(80, 80, 80);
 	--color-header-bg: rgb(30, 30, 30);
 	--color-header-text: rgb(224, 224, 224);
 	--color-header-shadow: 0 0 2rem rgba(0, 0, 0, 0.3);
@@ -47,8 +53,14 @@
 	--color-btn-text: rgb(224, 224, 224);
 	--color-btn-hover-bg: rgb(60, 65, 75);
 	
-	--drop-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.2);
+	--drop-shadow: 0 0.1rem 0.7rem rgba(0, 0, 0, 0.2);
 	--accent-color: #2e90fa;
+
+	--card-bg: rgb(55, 55, 55);
+	--card-border: thin solid var(--border-color);
+	--card-radius: var(--space-padding-half);
+	--card-drop-shadow: var(--drop-shadow);
+	--card-padding: var(--space-padding);
 }
 
 html,
@@ -81,13 +93,12 @@ button:focus-visible {
 
 main {
 	flex: 1;
-	padding: 0;
+	padding-top: var(--space-padding);
 }
 
 .canvas_preview canvas {
 	box-sizing: content-box;
 	display: block;
-	margin-top: 1rem;
 	width: 10rem;
 	height: 10rem;
 	border-radius: 50%;
@@ -128,7 +139,14 @@ footer {
 	color: var(--color-header-text);
 }
 
-
+.card {
+	background: var(--card-bg);
+	border: var(--card-border);
+	border-radius: var(--card-radius);
+	box-shadow: var(--card-drop-shadow);
+	padding: var(--card-padding);
+	margin-bottom: var(--space-padding-double);
+}
 
 button,
 input[type="file"]::file-selector-button {
@@ -165,7 +183,11 @@ input[type=range]::-webkit-slider-thumb {
 	background: var(--color-slider-thumb);
 	cursor: pointer;
 }
-
+input[type=range]::-webkit-slider-thumb:active,
+input[type=range]::-webkit-slider-thumb:focus,
+input[type=range]::-webkit-slider-thumb:hover {
+	background: var(--color-slider-thumb-active);
+}
 button svg {
 	width: 1em;
 	height: 1em;
@@ -188,7 +210,6 @@ input[type="file"]::file-selector-button{
 .image-preview-wrapper .image-preview {
 	box-sizing: content-box;
 	position: relative;
-	margin-top: var(--space-padding);
 	width: var(--image-width);
 	height: var(--image-height);
 }
@@ -267,7 +288,6 @@ input[type="file"]::file-selector-button{
 }
 
 .upload-button {
-	margin-top: 2rem;
 	background-color: rgb(55, 144, 76);
 	color: white;
 }
@@ -276,3 +296,9 @@ input[type="file"]::file-selector-button{
 	background-color: rgb(63, 211, 98);
 }
 
+.sr-only {
+	position: absolute;
+	height: 0;
+	overflow: hidden;
+	border: 0;
+}

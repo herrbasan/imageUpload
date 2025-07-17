@@ -24,8 +24,10 @@
     <main>
         
         <section>
-            <input type="file" id="image-upload" accept="image/*" aria-describedby="file-upload-help">
-            <div class="image-preview-wrapper">
+            <div class="card">
+                <input type="file" id="image-upload" accept="image/*" aria-describedby="file-upload-help">
+            </div>
+            <div class="image-preview-wrapper card">
                 <div id="image-preview" class="image-preview">
                     <div class="image-preview-overlay"></div>
                     <div class="image-preview-container" tabindex="0" aria-label="Interactive image preview" aria-describedby="image-controls-help"></div>
@@ -52,25 +54,28 @@
                     </div>
                 </div>
             </div>
-            <div class="canvas_preview"></div>
-        </section>
-        <section>
-            <button id="upload-button" class="upload-button" aria-describedby="upload-help">
-                <span class="button-text">Generate Image</span>
-            </button>
-        </section>
-        <section>
-            <div id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP.</div>
-            <div id="image-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</div>
-            <div id="zoom-help" class="sr-only">Adjust zoom level from 0.2x to 5x magnification.</div>
-            <div id="fill-help" class="sr-only">Scale image to completely fill the preview area, may crop parts of the image.</div>
-            <div id="fit-help" class="sr-only">Scale image to fit entirely within the preview area with no cropping.</div>
-            <div id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</div>
-            Use the mousewheel to zoom in and out of the image. Drag the image to reposition it within the preview area.
-            On touch devices, pinch to zoom and drag to reposition the image.
-            With Keyboard navigation, use the arrow keys to move the image around, when focused on the image preview area.
+            <div class="card">
+                <div class="canvas_preview"></div>
+            </div>
+             <div class="card">
+                <button id="upload-button" class="upload-button" aria-describedby="upload-help">
+                    <span class="button-text">Generate Image</span>
+                </button>
+            </div>
+            <div class="card">
+                <div id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP.</div>
+                <div id="image-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</div>
+                <div id="zoom-help" class="sr-only">Adjust zoom level from 0.2x to 5x magnification.</div>
+                <div id="fill-help" class="sr-only">Scale image to completely fill the preview area, may crop parts of the image.</div>
+                <div id="fit-help" class="sr-only">Scale image to fit entirely within the preview area with no cropping.</div>
+                <div id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</div>
+                Use the mousewheel to zoom in and out of the image. Drag the image to reposition it within the preview area.
+                On touch devices, pinch to zoom and drag to reposition the image.
+                With Keyboard navigation, use the arrow keys to move the image around, when focused on the image preview area.
+            </div>
         </section>
     </main>
+    
     <footer>
         <p>View Source on <a href="https://github.com/herrbasan/ImageUpload">GitHub</a></p>
     </footer>
