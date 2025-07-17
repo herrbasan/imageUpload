@@ -99,7 +99,7 @@ function setTransform() {
 		g.lastScale = img.scale;
 		g.lastPos = { x: img.pos.x, y: img.pos.y };
 		img.transformQueued = false;
-		updateCroppedImage();
+		updateCroppedImageDelayed();
 	});
 }
 
@@ -342,7 +342,7 @@ function updateCroppedImageDelayed() {
 	clearTimeout(img.canvasTimeout);
 	img.canvasTimeout = setTimeout(() => {
 		generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
-	}, 30);
+	}, 100);
 }
 // Generate a cropped image from the preview using canvas
 function generateCroppedImage(img, scale, pos, cropSize) {
