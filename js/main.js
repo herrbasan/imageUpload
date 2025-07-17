@@ -13,12 +13,11 @@ function init() {
 	g.canvas.width = g.imageWidth;
 	g.canvas.height = g.imageHeight;
 	g.ctx = g.canvas.getContext('2d');
+	g.containerScale = 1;
 
 	g.MAX_ZOOM = 2.5;
 	g.MIN_ZOOM = 0.05;
 	g.MOUSEWHEEL_ZOOM_STEP = 0.05;
-
-	
 
 	ut.el('section.canvas').appendChild(g.canvas);
 	checkSetTheme();
@@ -166,8 +165,8 @@ function initTransformEvents(img) {
 		e.preventDefault();
 		img.dragging = true;
 		img.style.cursor = 'grabbing';
-		img.start.x = e.clientX - img.pos.x;
-		img.start.y = e.clientY - img.pos.y;
+		img.start.x = (e.clientX / g.containerScale) - img.pos.x;
+		img.start.y = (e.clientY / g.containerScale) - img.pos.y;
 		document.body.style.userSelect = 'none';
 	});
 
@@ -176,8 +175,8 @@ function initTransformEvents(img) {
 
 	function onMove(e) {
 		if (!img.dragging) return;
-		img.pos.x = e.clientX - img.start.x;
-		img.pos.y = e.clientY - img.start.y;
+		img.pos.x = (e.clientX / g.containerScale) - img.start.x;
+		img.pos.y = (e.clientY / g.containerScale) - img.start.y;
 		setTransform();
 	}
 
@@ -191,20 +190,22 @@ function initTransformEvents(img) {
 	let lastTouch = null;
 	let pinchStart = null;
 	img.addEventListener('touchstart', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
 		if (e.touches.length === 1) {
 			img.dragging = true;
-			lastTouch = { x: e.touches[0].clientX - img.pos.x, y: e.touches[0].clientY - img.pos.y };
+			lastTouch = { x: (e.touches[0].clientX / g.containerScale) - img.pos.x, y: (e.touches[0].clientY / g.containerScale) - img.pos.y };
 			img.style.cursor = 'grabbing';
 		} else if (e.touches.length === 2) {
 			let rect = img.getBoundingClientRect();
-			let cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-			let cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+			let cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 / g.containerScale;
+			let cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 / g.containerScale;
 			pinchStart = {
 				dist: getTouchDist(e.touches),
 				scale: img.scale,
 				center: {
-					x: (cx - rect.left) / img.scale,
-					y: (cy - rect.top) / img.scale
+					x: (cx - rect.left / g.containerScale) / img.scale,
+					y: (cy - rect.top / g.containerScale) / img.scale
 				},
 				pos: { x: img.pos.x, y: img.pos.y },
 				screenCenter: { x: cx, y: cy }
@@ -213,18 +214,17 @@ function initTransformEvents(img) {
 	}, { passive: false });
 
 	img.addEventListener('touchmove', function(e) {
-		interActionStarted();
 		e.preventDefault();
 		if (e.touches.length === 1 && img.dragging) {
-			img.pos.x = e.touches[0].clientX - lastTouch.x;
-			img.pos.y = e.touches[0].clientY - lastTouch.y;
+			img.pos.x = (e.touches[0].clientX / g.containerScale) - lastTouch.x;
+			img.pos.y = (e.touches[0].clientY / g.containerScale) - lastTouch.y;
 			setTransform();
 		} else if (e.touches.length === 2 && pinchStart) {
 			let newDist = getTouchDist(e.touches);
 			let nextScale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, pinchStart.scale * (newDist / pinchStart.dist)));
 			let rect = img.getBoundingClientRect();
-			let cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-			let cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+			let cx = (e.touches[0].clientX + e.touches[1].clientX) / 2 / g.containerScale;
+			let cy = (e.touches[0].clientY + e.touches[1].clientY) / 2 / g.containerScale;
 			// Calculate pan delta
 			let dx = cx - pinchStart.screenCenter.x;
 			let dy = cy - pinchStart.screenCenter.y;
@@ -281,35 +281,27 @@ function initTransformEvents(img) {
 	}
 }
 
-function interActionStarted() {
-	/*if (!g.currentImage) return;
-	clearTimeout(g.currentImage.canvasTimeout);
-	g.currentImage.canvasTimeout = null;*/
-}
-
-function interActionFinished() {
-	/*updateCroppedImage();*/
-}
-
 // Responsive resize logic
 function resizePreviewContainer() {
-	let section = ut.el('main > section');
 	let preview = ut.el('.image-preview');
-	let maxW = g.imageWidth || 800;
-	let maxH = g.imageHeight || 600;
-	let style = window.getComputedStyle(section);
+	let container = preview.parentNode
+	let maxW = g.imageWidth;
+	let maxH = g.imageHeight;
+	let style = window.getComputedStyle(container);
 	let padLeft = parseFloat(style.paddingLeft) || 0;
 	let padRight = parseFloat(style.paddingRight) || 0;
-	let sectionW = section.offsetWidth - padLeft - padRight;
-	let w = Math.min(sectionW, maxW);
+	let containerW = container.offsetWidth - padLeft - padRight;
+	let w = Math.min(containerW, maxW);
 	let scale = w / maxW;
+	g.containerScale = scale; // Store for later use
 	// Use transform to scale the container instead of changing width/height
 	preview.style.transform = `scale(${scale})`;
 	preview.style.transformOrigin = 'top left';
 	// Keep original dimensions for consistent logic
-	preview.style.width = maxW + 'px';
-	preview.style.height = maxH + 'px';
+	//preview.style.width = maxW + 'px';
+	//preview.style.height = maxH + 'px';
 	preview.style.marginBottom = -maxH * (1 - scale) + 'px';
+	preview.style.marginLeft = -(padLeft * scale) + 'px';
 
 	updateCroppedImage();
 }
