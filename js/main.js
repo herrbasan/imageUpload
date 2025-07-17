@@ -99,6 +99,7 @@ function setTransform() {
 		g.lastScale = img.scale;
 		g.lastPos = { x: img.pos.x, y: img.pos.y };
 		img.transformQueued = false;
+		updateCroppedImage();
 	});
 }
 
@@ -117,7 +118,6 @@ function applyInitialTransform() {
 		img.pos.x = (g.imageWidth - iW * img.scale) / 2;
 		img.pos.y = (g.imageHeight - iH * img.scale) / 2;
 		setTransform();
-		interActionFinished();
 	}
 }
 
@@ -160,7 +160,6 @@ function initTransformEvents(img) {
 		img.pos.y -= (imgCenterY * (nextScale - prevScale));
 		img.scale = nextScale;
 		setTransform();
-		interActionFinished();
 	}, { passive: false });
 
 	img.addEventListener('mousedown', function(e) {
@@ -177,7 +176,6 @@ function initTransformEvents(img) {
 
 	function onMove(e) {
 		if (!img.dragging) return;
-		interActionStarted();
 		img.pos.x = e.clientX - img.start.x;
 		img.pos.y = e.clientY - img.start.y;
 		setTransform();
@@ -187,14 +185,12 @@ function initTransformEvents(img) {
 		img.dragging = false;
 		img.style.cursor = 'grab';
 		document.body.style.userSelect = '';
-		interActionFinished();
 	}
 
 	// Touch support (improved pinch/zoom logic)
 	let lastTouch = null;
 	let pinchStart = null;
 	img.addEventListener('touchstart', function(e) {
-		interActionStarted();
 		if (e.touches.length === 1) {
 			img.dragging = true;
 			lastTouch = { x: e.touches[0].clientX - img.pos.x, y: e.touches[0].clientY - img.pos.y };
@@ -245,7 +241,6 @@ function initTransformEvents(img) {
 		img.style.cursor = 'grab';
 		lastTouch = null;
 		pinchStart = null;
-		interActionFinished();
 	}, { passive: false });
 
 	function getTouchDist(touches) {
@@ -280,7 +275,6 @@ function initTransformEvents(img) {
 			}
 			if (moved) {
 				setTransform();
-				interActionFinished();
 				e.preventDefault();
 			}
 		});
@@ -288,13 +282,13 @@ function initTransformEvents(img) {
 }
 
 function interActionStarted() {
-	if (!g.currentImage) return;
+	/*if (!g.currentImage) return;
 	clearTimeout(g.currentImage.canvasTimeout);
-	g.currentImage.canvasTimeout = null;
+	g.currentImage.canvasTimeout = null;*/
 }
 
 function interActionFinished() {
-	updateCroppedImage();
+	/*updateCroppedImage();*/
 }
 
 // Responsive resize logic
@@ -340,10 +334,15 @@ function uploadImage() {
 function updateCroppedImage() {
 	if (!g.currentImage) return;
 	let img = g.currentImage;
+	generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
+}
+function updateCroppedImageDelayed() {
+	if (!g.currentImage) return;
+	let img = g.currentImage;
 	clearTimeout(img.canvasTimeout);
 	img.canvasTimeout = setTimeout(() => {
 		generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
-	}, 500);
+	}, 30);
 }
 // Generate a cropped image from the preview using canvas
 function generateCroppedImage(img, scale, pos, cropSize) {
@@ -362,7 +361,7 @@ function generateCroppedImage(img, scale, pos, cropSize) {
 	ctx.rect(0, 0, cropSize.width, cropSize.height);
 	ctx.clip();
 	ctx.drawImage(img, pos.x, pos.y, iW * scale, iH * scale);
-	ctx.restore();
+	//ctx.restore();
 }
 
 function checkSetTheme() {
