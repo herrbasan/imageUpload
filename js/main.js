@@ -72,13 +72,14 @@ function placeImagePreview(img) {
 	g.lastScale = img.scale;
 	g.lastPos = img.pos;
 
-	img.resetBtn = ut.el('#reset-image');
-	img.zoomSlider = ut.el('#zoom-slider');
+	img.resetBtnFill = ut.el('#reset-image-fill');
+	img.resetBtnFit = ut.el('#reset-image-fit');
+	img.zoomSlider = ut.el('#zoom-slider-control');
 
 	img.onload = function() {
 		g.img = img.cloneNode(true);
 		initTransformEvents(img);
-		applyInitialTransform();
+		applyTransform();
 	};
 
 }
@@ -106,7 +107,7 @@ function setTransform() {
 	});
 }
 
-function applyInitialTransform() {
+function applyTransform(mode = 'fill') {
 	if(!g.currentImage) return;
 	let img = g.currentImage;
 	let iW = img.naturalWidth;
@@ -115,8 +116,16 @@ function applyInitialTransform() {
 	if (iW && iH && g.imageWidth && g.imageHeight) {
 		let scaleW = g.imageWidth / iW;
 		let scaleH = g.imageHeight / iH;
-		ut.log(`Initial scale: ${scaleW} (width), ${scaleH} (height)`);
-		img.scale = Math.min(scaleW, scaleH);
+		ut.log(`Scale options: ${scaleW} (width), ${scaleH} (height), mode: ${mode}`);
+		
+		if (mode === 'fill') {
+			// object-fit: cover - scale to fill container, may crop
+			img.scale = Math.max(scaleW, scaleH);
+		} else {
+			// object-fit: contain - scale to fit container, no crop (default)
+			img.scale = Math.min(scaleW, scaleH);
+		}
+		
 		img.scale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, img.scale));
 		img.pos.x = (g.imageWidth - iW * img.scale) / 2;
 		img.pos.y = (g.imageHeight - iH * img.scale) / 2;
@@ -125,9 +134,14 @@ function applyInitialTransform() {
 }
 
 function initTransformEvents(img) {
-	if (img.resetBtn) {
-		img.resetBtn.onclick = function() {
-			applyInitialTransform();
+	if (img.resetBtnFit) {
+		img.resetBtnFit.onclick = function() {
+			applyTransform('fit');
+		};
+	}
+	if (img.resetBtnFill) {
+		img.resetBtnFill.onclick = function() {
+			applyTransform('fill');
 		};
 	}
 
