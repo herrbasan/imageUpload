@@ -19,8 +19,9 @@ function init() {
 	g.MIN_ZOOM = 0.05;
 	g.MOUSEWHEEL_ZOOM_STEP = 0.05;
 	g.KEYBOARD_PAN_STEP = 40; // pixels per key press
+	g.CANVAS_PREVIEW_DELAY = 0; // ms delay for canvas updates
 
-	ut.el('section.canvas').appendChild(g.canvas);
+	ut.el('.canvas_preview').appendChild(g.canvas);
 	checkSetTheme();
 	initApp();
 
@@ -34,7 +35,10 @@ function initApp() {
 	placeImagePreview(randomUnsplashPortrait());
 	let uploadInput = ut.el('#image-upload');
 	uploadInput.addEventListener('change', handleFileSelect);
-	function handleFileSelect(event) {
+	
+}
+
+function handleFileSelect(event) {
 		let files = event.target.files;
 		if (files.length > 0) {
 			let file = files[0];
@@ -46,10 +50,9 @@ function initApp() {
 			};
 			reader.readAsDataURL(file);
 		} else {
-			ut.el('#image-preview').innerHTML = 'No image selected.';
+			ut.log('No file selected');
 		}
 	}
-}
 
 function placeImagePreview(img) {
 	img.alt = 'Preview Image';
@@ -99,7 +102,7 @@ function setTransform() {
 		g.lastScale = img.scale;
 		g.lastPos = { x: img.pos.x, y: img.pos.y };
 		img.transformQueued = false;
-		updateCroppedImageDelayed();
+		updateCroppedImage();
 	});
 }
 
@@ -329,16 +332,16 @@ function uploadImage() {
 function updateCroppedImage() {
 	if (!g.currentImage) return;
 	let img = g.currentImage;
-	generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
-}
-function updateCroppedImageDelayed() {
-	if (!g.currentImage) return;
-	let img = g.currentImage;
+	if(g.CANVAS_PREVIEW_DELAY === 0) {
+		generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
+		return;
+	}
 	clearTimeout(img.canvasTimeout);
 	img.canvasTimeout = setTimeout(() => {
 		generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
-	}, 100);
+	}, g.CANVAS_PREVIEW_DELAY);
 }
+
 // Generate a cropped image from the preview using canvas
 function generateCroppedImage(img, scale, pos, cropSize) {
 	

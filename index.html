@@ -22,35 +22,33 @@
         </div>
     </header>
     <main>
+        
+        <section>
+            <input type="file" id="image-upload" accept="image/*">
+            <div class="image-preview-wrapper">
+                <div id="image-preview" class="image-preview">
+                    <div class="image-preview-overlay"></div>
+                    <div class="image-preview-container" tabindex="0" aria-label="Image preview container"></div>
+                </div>
+            
+                <div class="controls">
+                    <label for="zoom-slider" style="margin-right:8px;">Zoom:</label>
+                    <input type="range" id="zoom-slider" min="0.2" max="5" step="0.01" value="1" aria-label="Zoom">
+                    <button id="reset-image">Reset</button>
+                </div>
+            </div>
+            <div class="canvas_preview"></div>
+        </section>
+        <section>
+            <button id="upload-button" class="upload-button">
+                <span class="button-text">Generate Image</span>
+            </button>
+        </section>
         <section>
             Use the mousewheel to zoom in and out of the image. Drag the image to reposition it within the preview area.
             On touch devices, pinch to zoom and drag to reposition the image.
             With Keyboard navigation, use the arrow keys to move the image around, when focused on the image preview area.
         </section>
-        <section>
-            <input type="file" id="image-upload" accept="image/*">
-            <div id="image-preview" class="image-preview">
-                <div class="image-preview-overlay"></div>
-                <div class="image-preview-container" tabindex="0" aria-label="Image preview container">
-                    
-                </div>
-            </div>
-             <div class="controls">
-                <label for="zoom-slider" style="margin-right:8px;">Zoom:</label>
-                <input type="range" id="zoom-slider" min="0.2" max="5" step="0.01" value="1" aria-label="Zoom">
-                <button id="reset-image">Reset</button>
-            </div>
-        </section>
-        <section>
-            <button id="upload-button" class="upload-button">
-                <span class="button-text">Generate Image</span>
-                <span class="spinner hidden"></span>
-            </button>
-        </section>
-        <section class="canvas">
-
-        </section>
-
     </main>
     <footer>
         <p>View Source on <a href="https://github.com/herrbasan/ImageUpload">GitHub</a></p>
