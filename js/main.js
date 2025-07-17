@@ -20,22 +20,18 @@ function init() {
 	g.MOUSEWHEEL_ZOOM_STEP = 0.05;
 	g.KEYBOARD_PAN_STEP = 40; // pixels per key press
 	g.CANVAS_PREVIEW_DELAY = 0; // ms delay for canvas updates
+	g.CANVAS_BACKGROUND_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)'; // Background color for canvas
 
 	ut.el('.canvas_preview').appendChild(g.canvas);
 	checkSetTheme();
-	initApp();
+
 
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
 	
 	ut.el('#upload-button').addEventListener('click', uploadImage);
-}
-
-function initApp() {
-	placeImagePreview(randomUnsplashPortrait());
-	let uploadInput = ut.el('#image-upload');
-	uploadInput.addEventListener('change', handleFileSelect);
-	
+	ut.el('#image-upload').addEventListener('change', handleFileSelect);
+	placeImage(randomUnsplashPortrait());
 }
 
 function handleFileSelect(event) {
@@ -46,7 +42,7 @@ function handleFileSelect(event) {
 			reader.onload = function (e) {
 				let img = document.createElement('img');
 				img.src = e.target.result;
-				placeImagePreview(img);
+				placeImage(img);
 			};
 			reader.readAsDataURL(file);
 		} else {
@@ -54,7 +50,7 @@ function handleFileSelect(event) {
 		}
 	}
 
-function placeImagePreview(img) {
+function placeImage(img) {
 	img.alt = 'Preview Image';
 	img.style.cursor = 'grab';
 	img.style.userSelect = 'none';
@@ -99,7 +95,6 @@ function setTransform() {
 		if (img.zoomSlider && Number(img.zoomSlider.value) !== img.scale) {
 			img.zoomSlider.value = img.scale;
 		}
-		// Store current transform globally for cropping
 		g.lastScale = img.scale;
 		g.lastPos = { x: img.pos.x, y: img.pos.y };
 		img.transformQueued = false;
@@ -119,10 +114,8 @@ function applyTransform(mode = 'fill') {
 		ut.log(`Scale options: ${scaleW} (width), ${scaleH} (height), mode: ${mode}`);
 		
 		if (mode === 'fill') {
-			// object-fit: cover - scale to fill container, may crop
 			img.scale = Math.max(scaleW, scaleH);
 		} else {
-			// object-fit: contain - scale to fit container, no crop (default)
 			img.scale = Math.min(scaleW, scaleH);
 		}
 		
@@ -134,6 +127,7 @@ function applyTransform(mode = 'fill') {
 }
 
 function initTransformEvents(img) {
+	// Init buttons and sliders
 	if (img.resetBtnFit) {
 		img.resetBtnFit.onclick = function() {
 			applyTransform('fit');
@@ -163,6 +157,7 @@ function initTransformEvents(img) {
 		});
 	}
 
+	// Mouse wheel zoom support
 	img.addEventListener('wheel', function(e) {
 		e.preventDefault();
 		let prevScale = img.scale;
@@ -181,6 +176,7 @@ function initTransformEvents(img) {
 		setTransform();
 	}, { passive: false });
 
+	// Mouse drag support
 	img.addEventListener('mousedown', function(e) {
 		e.preventDefault();
 		img.dragging = true;
@@ -206,7 +202,7 @@ function initTransformEvents(img) {
 		document.body.style.userSelect = '';
 	}
 
-	// Touch support (improved pinch/zoom logic)
+	// Touch support
 	let lastTouch = null;
 	let pinchStart = null;
 	img.addEventListener('touchstart', function(e) {
@@ -270,7 +266,7 @@ function initTransformEvents(img) {
 	}
 
 	// Keyboard pan support when container is focused
-	
+
 	if (g.imagePreviewContainer) {
 		g.imagePreviewContainer.addEventListener('keydown', function(e) {
 			let panStep = g.KEYBOARD_PAN_STEP * img.scale; // step size relative to current scale
@@ -315,14 +311,10 @@ function resizePreviewContainer() {
 	let w = Math.min(containerW, maxW);
 	let scale = w / maxW;
 	g.containerScale = scale; // Store for later use
-	// Use transform to scale the container instead of changing width/height
+
 	preview.style.transform = `scale(${scale})`;
 	preview.style.transformOrigin = 'top left';
-	// Keep original dimensions for consistent logic
-	//preview.style.width = maxW + 'px';
-	//preview.style.height = maxH + 'px';
 	preview.style.marginBottom = -maxH * (1 - scale) + 'px';
-
 
 	updateCroppedImage();
 }
@@ -361,7 +353,7 @@ function updateCroppedImage() {
 function generateCroppedImage(img, scale, pos, cropSize) {
 	
 	let ctx = g.ctx;
-	ctx.fillStyle = '#000';
+	ctx.fillStyle = g.CANVAS_BACKGROUND_COLOR;
 	ctx.fillRect(0, 0, cropSize.width, cropSize.height);
 
 
