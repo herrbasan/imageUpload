@@ -12,7 +12,7 @@ function init() {
 	g.canvas = document.createElement('canvas');
 	g.canvas.width = g.imageWidth;
 	g.canvas.height = g.imageHeight;
-	g.ctx = g.canvas.getContext('2d');
+	g.ctx = g.canvas.getContext('2d', { willReadFrequently: true });
 	g.containerScale = 1;
 
 	g.MAX_ZOOM = 2.5;
@@ -22,9 +22,11 @@ function init() {
 	g.CANVAS_PREVIEW_DELAY = 0; // ms delay for canvas updates
 	g.CANVAS_BACKGROUND_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)'; // Background color for canvas
 
+	// Initialize worker for offscreen canvas processing
+	initImageWorker();
+
 	ut.el('.canvas_preview').appendChild(g.canvas);
 	checkSetTheme();
-
 
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
@@ -74,6 +76,8 @@ function placeImage(img) {
 
 	img.onload = function() {
 		g.img = img.cloneNode(true);
+		// Send new image to worker when image changes
+		sendImageToWorker(img);
 		initTransformEvents(img);
 		applyTransform();
 	};
@@ -320,53 +324,191 @@ function resizePreviewContainer() {
 }
 
 function uploadImage() {
-	generateCroppedImage(g.img, g.lastScale, g.lastPos, {width: g.imageWidth, height: g.imageHeight});
-	let imgDataUrl = g.canvas.toDataURL('image/jpeg', 0.92);
-	let win = window.open();
-	if (win) {
-		win.document.write(/*html*/`
-			<html>
-				<head><title>Cropped Image</title></head>
-				<body style='margin:0;display:flex;align-items:center;justify-content:center;background:#222;'>
-					<img src='${imgDataUrl}'>
-				</body>
-			</html>`
-		);
-		win.document.close();
-	}
+	generateCroppedImage();
+	
+	// Use worker-generated blob if available, otherwise fallback to canvas
+	let getImageData = () => {
+		if (g.lastGeneratedBlob) {
+			return URL.createObjectURL(g.lastGeneratedBlob);
+		} else {
+			return g.canvas.toDataURL('image/jpeg', 0.92);
+		}
+	};
+	
+	// Small delay to ensure worker has processed if using worker
+	setTimeout(() => {
+		let imgDataUrl = getImageData();
+		let win = window.open();
+		if (win) {
+			win.document.write(/*html*/`
+				<html>
+					<head><title>Cropped Image</title></head>
+					<body style='margin:0;display:flex;align-items:center;justify-content:center;background:#222;'>
+						<img src='${imgDataUrl}'>
+					</body>
+				</html>`
+			);
+			win.document.close();
+		}
+	}, g.workerReady ? 100 : 0);
 }
 
 function updateCroppedImage() {
 	if (!g.currentImage) return;
 	let img = g.currentImage;
 	if(g.CANVAS_PREVIEW_DELAY === 0) {
-		generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
+		generateCroppedImage();
 		return;
 	}
 	clearTimeout(img.canvasTimeout);
 	img.canvasTimeout = setTimeout(() => {
-		generateCroppedImage(img, g.lastScale, g.lastPos, { width: g.imageWidth, height: g.imageHeight });
+		generateCroppedImage();
 	}, g.CANVAS_PREVIEW_DELAY);
 }
 
 // Generate a cropped image from the preview using canvas
 function generateCroppedImage(img, scale, pos, cropSize) {
+	img = img || g.currentImage;
+	scale = scale || img.scale;
+	pos = pos || img.pos;
+	cropSize = cropSize || { width: g.imageWidth, height: g.imageHeight };
+
+	// Use worker if available, fallback to main thread
+	if (g.imageWorker && g.workerReady) {
+		generateCroppedImageWorker(img, scale, pos, cropSize);
+	} else {
+		generateCroppedImageMainThread(img, scale, pos, cropSize);
+	}
+}
+
+function generateCroppedImageWorker(img, scale, pos, cropSize) {
+	// Send transform parameters to worker (image bitmap is already there)
+	g.imageWorker.postMessage({
+		type: 'generateImage',
+		data: {
+			scale: scale,
+			pos: pos,
+			cropSize: cropSize,
+			backgroundColor: g.CANVAS_BACKGROUND_COLOR
+		}
+	});
+}
+
+function sendImageToWorker(img) {
+	if (!g.imageWorker || !g.workerReady) return;
 	
+	// Create ImageBitmap from the image for efficient transfer
+	createImageBitmap(img).then(bitmap => {
+		g.imageWorker.postMessage({
+			type: 'updateImage',
+			data: {
+				imageBitmap: bitmap,
+				imageWidth: img.naturalWidth,
+				imageHeight: img.naturalHeight
+			}
+		}, [bitmap]); // Transfer the bitmap
+	}).catch(error => {
+		ut.log('Failed to create ImageBitmap:', error);
+		// Fallback to ImageData approach
+		let tempCanvas = document.createElement('canvas');
+		tempCanvas.width = img.naturalWidth;
+		tempCanvas.height = img.naturalHeight;
+		let tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+		tempCtx.drawImage(img, 0, 0);
+		let imageData = tempCtx.getImageData(0, 0, img.naturalWidth, img.naturalHeight);
+		
+		g.imageWorker.postMessage({
+			type: 'updateImage',
+			data: {
+				imageData: imageData,
+				imageWidth: img.naturalWidth,
+				imageHeight: img.naturalHeight
+			}
+		});
+	});
+}
+
+function generateCroppedImageMainThread(img, scale, pos, cropSize) {
 	let ctx = g.ctx;
 	ctx.fillStyle = g.CANVAS_BACKGROUND_COLOR;
 	ctx.fillRect(0, 0, cropSize.width, cropSize.height);
-
 
 	let iW = img.naturalWidth;
 	let iH = img.naturalHeight;
 	scale = Math.max(0.0001, scale); // avoid div by zero
 
-	//ctx.save();
+	ctx.save();
 	ctx.beginPath();
 	ctx.rect(0, 0, cropSize.width, cropSize.height);
 	ctx.clip();
 	ctx.drawImage(img, pos.x, pos.y, iW * scale, iH * scale);
-	//ctx.restore();
+	ctx.restore();
+}
+
+function initImageWorker() {
+	// Check if OffscreenCanvas is supported
+	if (typeof OffscreenCanvas === 'undefined' || typeof Worker === 'undefined') {
+		ut.log('OffscreenCanvas or Worker not supported, using main thread');
+		g.workerReady = false;
+		return;
+	}
+
+	try {
+		g.imageWorker = new Worker('js/imageWorker.js');
+		g.workerReady = false;
+
+		g.imageWorker.addEventListener('message', function(e) {
+			let { type, blob, imageData, message } = e.data;
+			
+			switch (type) {
+				case 'ready':
+					g.workerReady = true;
+					ut.log('Image worker ready');
+					// Send initial image if one exists
+					if (g.currentImage && g.currentImage.complete) {
+						sendImageToWorker(g.currentImage);
+					}
+					break;
+				case 'imageReady':
+					// Update main canvas with worker result
+					if (imageData) {
+						g.ctx.putImageData(imageData, 0, 0);
+					}
+					// Store blob for download
+					g.lastGeneratedBlob = blob;
+					break;
+				case 'imageUpdated':
+					ut.log('Worker image updated');
+					// Regenerate cropped image with new source
+					updateCroppedImage();
+					break;
+				case 'error':
+					ut.log('Worker error:', message);
+					// Fallback to main thread
+					g.workerReady = false;
+					break;
+			}
+		});
+
+		g.imageWorker.addEventListener('error', function(error) {
+			ut.log('Worker failed to load:', error);
+			g.workerReady = false;
+		});
+
+		// Initialize worker
+		g.imageWorker.postMessage({
+			type: 'init',
+			data: {
+				width: g.imageWidth,
+				height: g.imageHeight,
+				backgroundColor: g.CANVAS_BACKGROUND_COLOR
+			}
+		});
+
+	} catch (error) {
+		ut.log('Failed to create worker:', error);
+		g.workerReady = false;
+	}
 }
 
 function checkSetTheme() {
@@ -384,6 +526,18 @@ function checkSetTheme() {
 			root.removeAttribute('data-theme');
 			localStorage.removeItem('theme');
 		}
+		
+		// Update canvas background color and notify worker
+		setTimeout(() => {
+			g.CANVAS_BACKGROUND_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)';
+			if (g.imageWorker && g.workerReady) {
+				g.imageWorker.postMessage({
+					type: 'updateBackground',
+					data: { backgroundColor: g.CANVAS_BACKGROUND_COLOR }
+				});
+			}
+			updateCroppedImage();
+		}, 50);
 	}
 
 	function getPreferredTheme() {
