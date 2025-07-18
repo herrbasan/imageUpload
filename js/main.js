@@ -4,23 +4,26 @@ let g = {};
 let ut = initUtilities();
 document.addEventListener('DOMContentLoaded', init);
 
-function init() {
+function init(prop) {
+	applyMinimalStyles();
 	g.imagePreviewContainer = ut.el('.image-preview-container');
-	g.imageWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')) || 256;
-	g.imageHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')) || 256;
-	
+	g.imagePreview = ut.el('.image-preview');
+	g.imageWidth = g.imageWidth || ut.cssVarNum('--image-width') || 512;
+	g.imageHeight = g.imageHeight || ut.cssVarNum('--image-height') || 512;
+
+
 	g.canvas = document.createElement('canvas');
-	g.canvas.width = g.imageWidth;
-	g.canvas.height = g.imageHeight;
+	g.canvas.width = g.imageWidth || prop.imageWidth || 512;
+	g.canvas.height = g.imageHeight || prop.imageHeight || 512;
 	g.ctx = g.canvas.getContext('2d', { willReadFrequently: true });
 	g.containerScale = 1;
 
-	g.MAX_ZOOM = 2.5;
-	g.MIN_ZOOM = 0.05;
-	g.MOUSEWHEEL_ZOOM_STEP = 0.05;
-	g.KEYBOARD_PAN_STEP = 40; // pixels per key press
-	g.CANVAS_PREVIEW_DELAY = 0; // ms delay for canvas updates
-	g.CANVAS_BACKGROUND_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)'; // Background color for canvas
+	g.MAX_ZOOM = prop.MAX_ZOOM || 5;
+	g.MIN_ZOOM = prop.MIN_ZOOM || 0.05;
+	g.MOUSEWHEEL_ZOOM_STEP = prop.MOUSEWHEEL_ZOOM_STEP || 0.05;
+	g.KEYBOARD_PAN_STEP = prop.KEYBOARD_PAN_STEP || 40; // pixels per key press
+	g.CANVAS_PREVIEW_DELAY = prop.CANVAS_PREVIEW_DELAY || 0; // ms delay for canvas updates
+	g.CANVAS_BACKGROUND_COLOR = prop.CANVAS_BACKGROUND_COLOR || getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)'; // Background color for canvas
 
 	// Initialize worker for offscreen canvas processing
 	initImageWorker();
@@ -303,7 +306,7 @@ function initTransformEvents(img) {
 
 // Responsive resize logic
 function resizePreviewContainer() {
-	let preview = ut.el('.image-preview');
+	let preview  = g.imagePreview;
 	let container = preview.parentNode
 	let maxW = g.imageWidth;
 	let maxH = g.imageHeight;
@@ -566,10 +569,66 @@ function randomUnsplashPortrait() {
 	return img;
 }
 
+
+
+function applyMinimalStyles() {
+	let style = document.createElement('style');
+	style.textContent = /*css*/`
+		:root {
+			--image-width: 256px;
+			--image-height: 256px;
+			--color-canvas-bg: rgb(150, 150, 150);
+		}
+		.image-preview-wrapper .image-preview {
+			margin: auto;
+		}
+
+		.image-preview-wrapper .image-preview {
+			box-sizing: content-box;
+			position: relative;
+			width: var(--image-width);
+			height: var(--image-height);
+		}
+
+
+		.image-preview-wrapper .image-preview-container {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background-color: var(--color-canvas-bg);
+		}
+
+		.image-preview-wrapper .image-preview-container img {
+			position: absolute;
+			top: 0;
+			left: 0;
+			transition: transform 0.1s ease-out;
+		}`;
+	document.head.prepend(style);
+}
+
 function initUtilities() {
 	let utils = {};
 	utils.el = function (s, context = document) { if (s instanceof Element) { return s; } else { return context.querySelector(s); } }
 	utils.els = function (s, context = document) { return context.querySelectorAll(s); }
+	utils.css = function (q, cs, remove=false) { let el = ut.el(q); if (!el) return; for (let key in cs) { if(remove){ el.style[key] = null;}else { el.style.setProperty(key, cs[key]);}}}
+	utils.cssVar = function(varName, value, numeric=false) {
+		let root = document.documentElement;
+		if (value !== undefined) {
+			root.style.setProperty(varName, value);
+		} else {
+			return getComputedStyle(root).getPropertyValue(varName) || '';
+		}
+	}
+	utils.cssVarNum = function(varName, value, numeric=false) {
+		let root = document.documentElement;
+		if (value !== undefined) {
+			root.style.setProperty(varName, value);
+		} else {
+			return parseFloat(getComputedStyle(root).getPropertyValue(varName)) || 0;
+		}
+	}
 	utils.killKids = function (_el) { _el = utils.el(_el); while (_el?.firstChild) { _el.removeChild(_el.firstChild); } }
 	utils.killMe = function (_el) { _el = utils.el(_el); if (_el?.parentNode) { _el.parentNode.removeChild(_el); } }
 	utils.log = console.log.bind(console);
