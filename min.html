@@ -11,35 +11,78 @@
         <h1>Image Upload</h1>
     </header>
     <main>
-        
         <section>
+            <div id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP, BMP, SVG, TIFF, AVIF.</div>
             <input type="file" id="imageUpload-upload" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/avif" aria-describedby="file-upload-help">
-            <div class="imageUpload-preview-wrapper card" style="margin-top: 2rem; margin-bottom: 2rem;">
+            <div class="imageUpload-preview-wrapper card">
+                <div id="imageUpload-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</div>
                 <div id="imageUpload-preview" class="imageUpload-preview">
-                    <div class="imageUpload-preview-overlay"></div>
                     <div class="imageUpload-preview-container" tabindex="0" aria-label="Interactive image preview" aria-describedby="imageUpload-controls-help"></div>
                 </div>
+                <div class="zoom-slider">
+                    <label for="zoom-slider-control">Zoom:</label>
+                    <input type="range" id="zoom-slider-control" min="0.2" max="5" step="0.01" value="1" aria-label="Zoom level" aria-describedby="zoom-help">
+                </div>
+                <div id="zoom-help" class="sr-only">Adjust zoom level from 0.2x to 5x magnification.</div>
             </div>
             <div class="card">
-                <div class="imageUpload_canvas_preview">
-                    <canvas style ="border-radius: 50%; width:10rem; height:10rem;"></canvas>
+                <div class="imageUpload-canvas-preview" aria-describedby="preview-help">
+                    <div id="preview-help" class="sr-only">Preview in small size</div>
+                    <canvas></canvas>
                 </div>
-                <hr>
-                <div>
-                    <p id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP, BMP, SVG, TIFF, AVIF.</p>
-                    <p id="imageUpload-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</p>
-                    <p id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</p>
-                </div>
-
             </div>
 
             <div class="card upload-controls">
+                <div id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</div>
                 <button id="upload-button" class="upload-button" aria-describedby="upload-help">
                     <span class="button-text">Upload Image</span>
                 </button>
             </div>
-            
         </section>
     </main>
+    <style>
+        :root {
+            --imageUpload-width: 360px;
+            --imageUpload-height: 360px;
+            --space-padding: 1rem;
+        }
+        body {
+            color-scheme: light dark; 
+            color: light-dark(#343434, #c0c0c0); 
+            background-color: light-dark(#d2d2d2, #2d2d2d);
+            font-family: system-ui;
+            margin: 0;
+            padding: var(--space-padding);
+        }
+        .card {
+            background-color: light-dark(#ffffff, #3a3a3a);
+            border-radius: 0.2rem;
+            padding: var(--space-padding);
+            margin-bottom: var(--space-padding);
+        }
+        .imageUpload-preview-wrapper {
+            margin-top: var(--space-padding);
+            margin-bottom: var(--space-padding);
+        }
+        .imageUpload-preview {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        .imageUpload-preview-container {
+            width: 100%;
+            height: 100%;
+        }
+        .imageUpload-canvas-preview canvas {
+            width: 6rem;
+            height: 6rem;
+            border-radius: 50%;
+            border: 2px solid c
+            currentColor;
+        }
+        .sr-only {
+           margin-bottom: var(--space-padding);
+        }
+    </style>
 </body>
 </html>

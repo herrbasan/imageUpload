@@ -12,7 +12,7 @@ function init(prop) {
 	g.imageHeight = g.imageHeight || ut.cssVarNum('--imageUpload-height') || 512;
 
 
-	g.canvas = ut.el('.imageUpload_canvas_preview canvas');
+	g.canvas = ut.el('.imageUpload-canvas-preview canvas');
 	g.canvas.width = g.imageWidth || prop.imageWidth || 512;
 	g.canvas.height = g.imageHeight || prop.imageHeight || 512;
 	g.ctx = g.canvas.getContext('2d', { willReadFrequently: true });
@@ -34,7 +34,7 @@ function init(prop) {
 	
 	ut.el('#upload-button').addEventListener('click', uploadImage);
 	ut.el('#imageUpload-upload').addEventListener('change', handleFileSelect);
-	placeImage(randomUnsplashPortrait());
+	
 }
 
 function handleFileSelect(event) {
