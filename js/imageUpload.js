@@ -6,13 +6,13 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init(prop) {
 	applyMinimalStyles();
-	g.imagePreviewContainer = ut.el('.image-preview-container');
-	g.imagePreview = ut.el('.image-preview');
-	g.imageWidth = g.imageWidth || ut.cssVarNum('--image-width') || 512;
-	g.imageHeight = g.imageHeight || ut.cssVarNum('--image-height') || 512;
+	g.imagePreviewContainer = ut.el('.imageUpload-preview-container');
+	g.imagePreview = g.imagePreviewContainer.parentNode
+	g.imageWidth = g.imageWidth || ut.cssVarNum('--imageUpload-width') || 512;
+	g.imageHeight = g.imageHeight || ut.cssVarNum('--imageUpload-height') || 512;
 
 
-	g.canvas = document.createElement('canvas');
+	g.canvas = ut.el('.imageUpload_canvas_preview canvas');
 	g.canvas.width = g.imageWidth || prop.imageWidth || 512;
 	g.canvas.height = g.imageHeight || prop.imageHeight || 512;
 	g.ctx = g.canvas.getContext('2d', { willReadFrequently: true });
@@ -27,15 +27,13 @@ function init(prop) {
 
 	// Initialize worker for offscreen canvas processing
 	initImageWorker();
-
-	ut.el('.canvas_preview').appendChild(g.canvas);
 	checkSetTheme();
 
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
 	
 	ut.el('#upload-button').addEventListener('click', uploadImage);
-	ut.el('#image-upload').addEventListener('change', handleFileSelect);
+	ut.el('#imageUpload-upload').addEventListener('change', handleFileSelect);
 	placeImage(randomUnsplashPortrait());
 }
 
@@ -73,8 +71,8 @@ function placeImage(img) {
 	g.lastScale = img.scale;
 	g.lastPos = img.pos;
 
-	img.resetBtnFill = ut.el('#reset-image-fill');
-	img.resetBtnFit = ut.el('#reset-image-fit');
+	img.resetBtnFill = ut.el('#reset-imageUpload-fill');
+	img.resetBtnFit = ut.el('#reset-imageUpload-fit');
 	img.zoomSlider = ut.el('#zoom-slider-control');
 
 	img.onload = function() {
@@ -575,23 +573,20 @@ function applyMinimalStyles() {
 	let style = document.createElement('style');
 	style.textContent = /*css*/`
 		:root {
-			--image-width: 256px;
-			--image-height: 256px;
+			--imageUpload-width: 256px;
+			--imageUpload-height: 256px;
 			--color-canvas-bg: rgb(150, 150, 150);
 		}
-		.image-preview-wrapper .image-preview {
-			margin: auto;
-		}
-
-		.image-preview-wrapper .image-preview {
+	
+		.imageUpload-preview-wrapper .imageUpload-preview {
 			box-sizing: content-box;
 			position: relative;
-			width: var(--image-width);
-			height: var(--image-height);
+			width: var(--imageUpload-width);
+			height: var(--imageUpload-height);
 		}
 
 
-		.image-preview-wrapper .image-preview-container {
+		.imageUpload-preview-wrapper .imageUpload-preview-container {
 			position: relative;
 			width: 100%;
 			height: 100%;
@@ -599,7 +594,7 @@ function applyMinimalStyles() {
 			background-color: var(--color-canvas-bg);
 		}
 
-		.image-preview-wrapper .image-preview-container img {
+		.imageUpload-preview-wrapper .imageUpload-preview-container img {
 			position: absolute;
 			top: 0;
 			left: 0;

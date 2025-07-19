@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Image Upload</title>
+    <script src="js/imageUpload.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Image Upload</h1>
+    </header>
+    <main>
+        
+        <section>
+            <input type="file" id="imageUpload-upload" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/avif" aria-describedby="file-upload-help">
+            <div class="imageUpload-preview-wrapper card" style="margin-top: 2rem; margin-bottom: 2rem;">
+                <div id="imageUpload-preview" class="imageUpload-preview">
+                    <div class="imageUpload-preview-overlay"></div>
+                    <div class="imageUpload-preview-container" tabindex="0" aria-label="Interactive image preview" aria-describedby="imageUpload-controls-help"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="imageUpload_canvas_preview">
+                    <canvas style ="border-radius: 50%; width:10rem; height:10rem;"></canvas>
+                </div>
+                <hr>
+                <div>
+                    <p id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP, BMP, SVG, TIFF, AVIF.</p>
+                    <p id="imageUpload-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</p>
+                    <p id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</p>
+                </div>
+
+            </div>
+
+            <div class="card upload-controls">
+                <button id="upload-button" class="upload-button" aria-describedby="upload-help">
+                    <span class="button-text">Upload Image</span>
+                </button>
+            </div>
+            
+        </section>
+    </main>
+</body>
+</html>

@@ -32,8 +32,8 @@
 	--border-color:rgb(145, 145, 145);
 
 	--focus-outline: 2px solid var(--color-text);
-	--image-width: 512px;
-	--image-height: 512px;
+	--imageUpload-width: 512px;
+	--imageUpload-height: 512px;
 	--mask-circle-size: 100%;
 	--drop-shadow: 0 0.1rem 0.7rem rgba(0, 0, 0, 0.15);
 	--accent-color: rgb(11, 87, 168);
@@ -166,7 +166,7 @@ footer {
 	margin-bottom: var(--space-padding-double);
 }
 
-.canvas_preview canvas {
+.imageUpload_canvas_preview canvas {
 	box-sizing: content-box;
 	display: block;
 	width: 6rem;
@@ -276,19 +276,19 @@ input[type="file"]::file-selector-button{
 	display: none;
 }
 
-.image-preview-wrapper .image-preview {
+.imageUpload-preview-wrapper .imageUpload-preview {
 	margin: auto;
 }
 
-.image-preview-wrapper .image-preview {
+.imageUpload-preview-wrapper .imageUpload-preview {
 	box-sizing: content-box;
 	position: relative;
-	width: var(--image-width);
-	height: var(--image-height);
+	width: var(--imageUpload-width);
+	height: var(--imageUpload-height);
 }
 
 
-.image-preview-wrapper .image-preview-container {
+.imageUpload-preview-wrapper .imageUpload-preview-container {
 	position: relative;
 	width: 100%;
 	height: 100%;
@@ -296,14 +296,14 @@ input[type="file"]::file-selector-button{
 	background-color: var(--color-canvas-bg);
 }
 
-.image-preview-wrapper .image-preview-container img {
+.imageUpload-preview-wrapper .imageUpload-preview-container img {
 	position: absolute;
 	top: 0;
 	left: 0;
 	transition: transform 0.1s ease-out;
 }
 
-.image-preview-wrapper .image-preview-overlay {
+.imageUpload-preview-wrapper .imageUpload-preview-overlay {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -318,7 +318,7 @@ input[type="file"]::file-selector-button{
 	pointer-events: none;
 }
 
-.image-preview-wrapper .image-preview-container::after {
+.imageUpload-preview-wrapper .imageUpload-preview-container::after {
 	content: '';
 	position: absolute;
 	top: 50%;
@@ -333,15 +333,15 @@ input[type="file"]::file-selector-button{
 	pointer-events: none;
 }
 
-.image-preview-wrapper > .controls {
-	max-width: var(--image-width);
+.imageUpload-preview-wrapper > .controls {
+	max-width: var(--imageUpload-width);
 	display: flex;
 	gap: var(--space-padding-half);
 	margin: auto;
 	margin-top: var(--space-padding);
 }
 
-.image-preview-wrapper .controls .button-container {
+.imageUpload-preview-wrapper .controls .button-container {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: var(--space-padding-half);
