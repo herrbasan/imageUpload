@@ -12,10 +12,10 @@
     </header>
     <main>
         <section>
-            <div id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP, BMP, SVG, TIFF, AVIF.</div>
-            <input type="file" id="imageUpload-upload" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/avif" aria-describedby="file-upload-help">
+            <div id="file-upload-help" class="help">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP, BMP, SVG, TIFF, AVIF.</div>
+            <input type="file" id="imageUpload-file-select" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/avif" aria-describedby="file-upload-help">
             <div class="imageUpload-preview-wrapper card">
-                <div id="imageUpload-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</div>
+                <div id="imageUpload-controls-help" class="help">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</div>
                 <div id="imageUpload-preview" class="imageUpload-preview">
                     <div class="imageUpload-preview-container" tabindex="0" aria-label="Interactive image preview" aria-describedby="imageUpload-controls-help"></div>
                 </div>
@@ -23,17 +23,17 @@
                     <label for="zoom-slider-control">Zoom:</label>
                     <input type="range" id="zoom-slider-control" min="0.2" max="5" step="0.01" value="1" aria-label="Zoom level" aria-describedby="zoom-help">
                 </div>
-                <div id="zoom-help" class="sr-only">Adjust zoom level from 0.2x to 5x magnification.</div>
+                <div id="zoom-help" class="help">Adjust zoom level from 0.2x to 5x magnification.</div>
             </div>
             <div class="card">
                 <div class="imageUpload-canvas-preview" aria-describedby="preview-help">
-                    <div id="preview-help" class="sr-only">Preview in small size</div>
+                    <div id="preview-help" class="help">Preview in small size</div>
                     <canvas></canvas>
                 </div>
             </div>
 
             <div class="card upload-controls">
-                <div id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</div>
+                <div id="upload-help" class="help">Generate and download the cropped image based on current zoom and position.</div>
                 <button id="upload-button" class="upload-button" aria-describedby="upload-help">
                     <span class="button-text">Upload Image</span>
                 </button>
@@ -77,12 +77,31 @@
             width: 6rem;
             height: 6rem;
             border-radius: 50%;
-            border: 2px solid c
-            currentColor;
+            border: 2px solid currentColor;
         }
-        .sr-only {
-           margin-bottom: var(--space-padding);
+        .help {
+            margin-bottom: var(--space-padding);
+        }
+
+        .zoom-slider {
+            width: 100%;
+            max-width: var(--imageUpload-width);
+            margin-top: var(--space-padding);
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: var(--space-padding);
+        }
+        .zoom-slider input[type="range"] {
+            width: 100%;
         }
     </style>
+    <script type="module">
+        // Initialize the image upload functionality
+        import { initImageUpload } from './js/imageUpload.js';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initImageUpload();
+        });
+    </script>
 </body>
 </html>

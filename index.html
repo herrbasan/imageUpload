@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Image Upload</title>
     <link rel="stylesheet" href="css/main.css?v=1.1">
-    <script src="js/imageUpload.js"></script>
+    <script type="module" src="js/imageUpload.js"></script>
 </head>
 <body>
     <header>
@@ -25,7 +25,7 @@
         
         <section>
             <div class="card">
-                <input type="file" id="imageUpload-upload" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/avif" aria-describedby="file-upload-help">
+                <input type="file" id="imageUpload-file-select" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/avif" aria-describedby="file-upload-help">
             </div>
             <div class="col2">
                 <div class="imageUpload-preview-wrapper card">
@@ -81,7 +81,7 @@
                 </div>
             </div>
             <div class="card upload-controls">
-                <button id="upload-button" class="upload-button" aria-describedby="upload-help">
+                <button id="imageUpload-upload-button" class="upload-button" aria-describedby="upload-help">
                     <span class="button-text">Upload Image</span>
                 </button>
             </div>
@@ -92,5 +92,46 @@
     <footer>
         <span>View Source on <a href="https://github.com/herrbasan/ImageUpload">GitHub</a></span>
     </footer>
+    <script type="module">
+        // Initialize the image upload functionality
+        import { initImageUpload } from './js/imageUpload.js';
+        checkSetTheme();
+        function checkSetTheme() {
+            let root = document.documentElement;
+            let themeToggle = document.querySelector('#theme-toggle');
+
+            function setTheme(mode) {
+                if (mode === 'dark') {
+                    root.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                } else if (mode === 'light') {
+                    root.setAttribute('data-theme', 'light');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    root.removeAttribute('data-theme');
+                    localStorage.removeItem('theme');
+                }
+            }
+
+            function getPreferredTheme() {
+                return localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            }
+
+            function toggleTheme() {
+                let current = getPreferredTheme();
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            }
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+
+            // Set theme on page load
+            setTheme(getPreferredTheme());
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            initImageUpload();
+        });
+    </script>
 </body>
 </html>

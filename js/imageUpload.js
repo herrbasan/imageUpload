@@ -1,8 +1,10 @@
 'use strict';
-
 let g = {};
 let ut = initUtilities();
-document.addEventListener('DOMContentLoaded', init);
+
+export function initImageUpload(prop = {}) {
+	init(prop);
+}
 
 function init(prop) {
 	applyMinimalStyles();
@@ -26,14 +28,13 @@ function init(prop) {
 	g.CANVAS_BACKGROUND_COLOR = prop.CANVAS_BACKGROUND_COLOR || getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)'; // Background color for canvas
 
 	// Initialize worker for offscreen canvas processing
-	initImageWorker();
-	checkSetTheme();
+	initImageWorker(); // This is optional
 
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
-	
-	ut.el('#upload-button').addEventListener('click', uploadImage);
-	ut.el('#imageUpload-upload').addEventListener('change', handleFileSelect);
+
+	ut.el('#imageUpload-upload-button').addEventListener('click', uploadImage);
+	ut.el('#imageUpload-file-select').addEventListener('change', handleFileSelect);
 	
 }
 
@@ -455,7 +456,7 @@ function initImageWorker() {
 	}
 
 	try {
-		g.imageWorker = new Worker('js/imageWorker.js');
+		g.imageWorker = new Worker('js/imageUploadWorker.js');
 		g.workerReady = false;
 
 		g.imageWorker.addEventListener('message', function(e) {
@@ -511,63 +512,6 @@ function initImageWorker() {
 		g.workerReady = false;
 	}
 }
-
-function checkSetTheme() {
-	let root = document.documentElement;
-	let themeToggle = ut.el('#theme-toggle');
-
-	function setTheme(mode) {
-		if (mode === 'dark') {
-			root.setAttribute('data-theme', 'dark');
-			localStorage.setItem('theme', 'dark');
-		} else if (mode === 'light') {
-			root.setAttribute('data-theme', 'light');
-			localStorage.setItem('theme', 'light');
-		} else {
-			root.removeAttribute('data-theme');
-			localStorage.removeItem('theme');
-		}
-		
-		// Update canvas background color and notify worker
-		setTimeout(() => {
-			g.CANVAS_BACKGROUND_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)';
-			if (g.imageWorker && g.workerReady) {
-				g.imageWorker.postMessage({
-					type: 'updateBackground',
-					data: { backgroundColor: g.CANVAS_BACKGROUND_COLOR }
-				});
-			}
-			updateCroppedImage();
-		}, 50);
-	}
-
-	function getPreferredTheme() {
-		return localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-	}
-
-	function toggleTheme() {
-		let current = getPreferredTheme();
-		setTheme(current === 'dark' ? 'light' : 'dark');
-	}
-
-	if (themeToggle) {
-		themeToggle.addEventListener('click', toggleTheme);
-	}
-
-	// Set theme on page load
-	setTheme(getPreferredTheme());
-}
-
-function randomUnsplashPortrait() {
-	let n = Math.floor(Math.random() * 24) + 1;
-	let numStr = n.toString().padStart(3, '0');
-	let url = `assets/${numStr}.jpg`;
-	let img = new Image();
-	img.src = url;
-	return img;
-}
-
-
 
 function applyMinimalStyles() {
 	let style = document.createElement('style');
@@ -629,3 +573,7 @@ function initUtilities() {
 	utils.log = console.log.bind(console);
 	return utils;
 }
+
+// Additional exports for public API
+export { placeImage, generateCroppedImage, uploadImage, applyTransform };
+

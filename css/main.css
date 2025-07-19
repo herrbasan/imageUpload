@@ -1,4 +1,5 @@
-/* Light theme (default) */
+/* CSS for Image Upload / Preview - Component */
+/* ################################################################################# */
 :root {
 	--size-base: 16px;
 	--color-bg: rgb(240, 240, 230);
@@ -68,6 +69,16 @@
 	--card-padding: var(--space-padding);
 }
 
+:root:not([data-theme="dark"]) .dark-icon {
+	display: none;
+}
+
+:root[data-theme="dark"] .light-icon {
+	display: none;
+}
+
+/* Base Layout */
+/* ################################################################################# */
 html,
 body {
 	height: 100%;
@@ -150,74 +161,8 @@ footer {
 	border-top: thin solid var(--border-color);
 }
 
-
-
-.col2 {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: var(--space-padding);
-}
-.card {
-	background: var(--card-bg);
-	border: var(--card-border);
-	border-radius: var(--card-radius);
-	box-shadow: var(--card-drop-shadow);
-	padding: var(--card-padding);
-	margin-bottom: var(--space-padding-double);
-}
-
-.imageUpload_canvas_preview canvas {
-	box-sizing: content-box;
-	display: block;
-	width: 6rem;
-	height: 6rem;
-	border-radius: 50%;
-	border: 0.15rem solid white;
-	outline: 0.1rem solid var(--border-color);
-	filter: drop-shadow(var(--drop-shadow));
-	background-color: var(--color-canvas-bg);
-}
-
-@media screen and (max-width: 880px) {
-  .col2 {
-		display: block;
-	}
-}
-
-.demo-profile {
-	display: flex;
-	align-items: center;
-	gap: var(--space-padding-double);
-}
-
-.demo-profile .name {
-	font-weight: 200;
-	font-size: 1.4rem;
-}
-
-.demo-profile .email {
-	font-size: 0.9rem;
-	color: var(--color-text-secondary);
-}
-
-.upload-controls {
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--space-padding);
-}
-
-.upload-controls .upload-button {
-	background-color: rgb(55, 144, 76);
-	color: white;
-	height: 2.5rem;
-	width: 10rem;
-}
-
-.upload-controls .upload-button:hover {
-	background-color: rgb(63, 211, 98);
-}
-
-
+/* Buttons & Controls */
+/* ################################################################################# */
 button,
 input[type="file"]::file-selector-button {
 	cursor: pointer;
@@ -268,13 +213,23 @@ input[type="file"]::file-selector-button{
 	margin-right: var(--space-padding);
 }
 
-:root:not([data-theme="dark"]) .dark-icon {
-	display: none;
+
+/* Component Layout */
+/* ################################################################################# */
+.col2 {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: var(--space-padding);
+}
+.card {
+	background: var(--card-bg);
+	border: var(--card-border);
+	border-radius: var(--card-radius);
+	box-shadow: var(--card-drop-shadow);
+	padding: var(--card-padding);
+	margin-bottom: var(--space-padding-double);
 }
 
-:root[data-theme="dark"] .light-icon {
-	display: none;
-}
 
 .imageUpload-preview-wrapper .imageUpload-preview {
 	margin: auto;
@@ -361,9 +316,61 @@ input[type="file"]::file-selector-button{
 	margin-right: var(--space-padding);
 }
 
+.demo-profile .imageUpload-canvas-preview canvas {
+	box-sizing: content-box;
+	display: block;
+	width: 6rem;
+	height: 6rem;
+	border-radius: 50%;
+	border: 0.15rem solid white;
+	outline: 0.1rem solid var(--border-color);
+	filter: drop-shadow(var(--drop-shadow));
+	background-color: var(--color-canvas-bg);
+}
+
+.demo-profile {
+	display: flex;
+	align-items: center;
+	gap: var(--space-padding-double);
+}
+
+.demo-profile .name {
+	font-weight: 200;
+	font-size: 1.4rem;
+}
+
+.demo-profile .email {
+	font-size: 0.9rem;
+	color: var(--color-text-secondary);
+}
+
+.upload-controls {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--space-padding);
+}
+
+.upload-controls .upload-button {
+	background-color: rgb(55, 144, 76);
+	color: white;
+	height: 2.5rem;
+	width: 10rem;
+}
+
+.upload-controls .upload-button:hover {
+	background-color: rgb(63, 211, 98);
+}
+
+
 .sr-only {
 	position: absolute;
 	height: 0;
 	overflow: hidden;
 	border: 0;
+}
+
+@media screen and (max-width: 880px) {
+  .col2 {
+		display: block;
+	}
 }
