@@ -303,6 +303,59 @@ input[type="file"]::file-selector-button{
 	margin-left: var(--space-padding);
 }
 
+
+
+
+.imageUpload-filter-controls {
+   display: flex;
+   flex-direction: column;
+   gap: var(--space-padding-half);
+   margin-top: var(--space-padding);
+   max-width: var(--imageUpload-width);
+   margin: auto;
+   margin-top: var(--space-padding-double);
+}
+
+.filter-slider-wrap {
+   display: grid;
+   grid-template-columns: 4.5rem 1fr 2rem;
+   align-items: center;
+   gap: var(--space-padding-half);
+   margin-bottom: var(--space-padding-quarter);
+}
+
+.filter-slider-wrap label {
+   font-size: 0.7rem;
+   color: var(--color-text-secondary);
+   text-transform: capitalize;
+   margin-right: 0.5rem;
+   white-space: nowrap;
+}
+
+.filter-slider-wrap input[type="range"] {
+   width: 100%;
+   margin: 0 0.5rem;
+}
+
+.filter-slider-value {
+   font-size: 0.7rem;
+   color: var(--color-text-secondary);
+   text-align: right;
+   font-variant-numeric: tabular-nums;
+}
+
+.filter-button {
+	padding: var(--space-padding-half);
+	border-radius: var(--border-radius);
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s;
+}
+
+.filter-button.active {
+	background: var(--accent-color);
+	color: var(--color-btn-hover-text);
+}
+
 .zoom-slider {
 	display: grid;
 	grid-template-columns: auto 1fr;

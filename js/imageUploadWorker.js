@@ -51,7 +51,7 @@ function updateImage({ imageBitmap, imageData, imageWidth, imageHeight }) {
 	}
 }
 
-function generateCroppedImage({ scale, pos, cropSize, backgroundColor }) {
+function generateCroppedImage({ scale, pos, cropSize, backgroundColor, filter }) {
 	if (!ctx || !offscreenCanvas) {
 		self.postMessage({ type: 'error', message: 'Canvas not initialized' });
 		return;
@@ -68,18 +68,27 @@ function generateCroppedImage({ scale, pos, cropSize, backgroundColor }) {
 	
 	ctx.fillStyle = backgroundColor || self.backgroundColor || '#969696';
 	ctx.fillRect(0, 0, cropSize.width, cropSize.height);
+	ctx.filter = filter || 'none';
+
+	let iW = currentImageWidth;
+	let iH = currentImageHeight;
+	scale = Math.max(0.0001, scale);
+
 	ctx.save();
 	ctx.beginPath();
 	ctx.rect(0, 0, cropSize.width, cropSize.height);
 	ctx.clip();
-	ctx.drawImage(currentImageBitmap, pos.x, pos.y, currentImageWidth * scale, currentImageHeight * scale);
+	ctx.drawImage(currentImageBitmap, pos.x, pos.y, iW * scale, iH * scale);
 	ctx.restore();
+	ctx.filter = 'none';
 	
+	// Send back ImageData for preview and Blob for download
+	let imageData = ctx.getImageData(0, 0, cropSize.width, cropSize.height);
 	offscreenCanvas.convertToBlob({ type: 'image/jpeg', quality: 0.92 }).then(blob => {
 		self.postMessage({ 
 			type: 'imageReady', 
 			blob: blob,
-			imageData: ctx.getImageData(0, 0, cropSize.width, cropSize.height)
+			imageData: imageData
 		});
 	}).catch(error => {
 		self.postMessage({ type: 'error', message: error.message });

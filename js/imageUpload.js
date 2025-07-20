@@ -1,4 +1,5 @@
 'use strict';
+import { initImageFilters } from './imageUploadFilters.js';
 let g = {};
 let ut = initUtilities();
 
@@ -30,6 +31,7 @@ function init(prop) {
 
 	// Initialize worker for offscreen canvas processing
 	initImageWorker(); // This is optional
+	initImageFilters(g, ut, setTransform);
 
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
@@ -72,6 +74,7 @@ function placeImage(img) {
 	
 	g.lastScale = img.scale;
 	g.lastPos = img.pos;
+	g.activeFilter = 'none';
 
 	img.resetBtnFill = ut.el('#reset-imageUpload-fill');
 	img.resetBtnFit = ut.el('#reset-imageUpload-fit');
@@ -83,6 +86,7 @@ function placeImage(img) {
 		sendImageToWorker(img);
 		initTransformEvents(img);
 		applyTransform();
+		initImageFilters(g, ut, setTransform);
 	};
 
 }
@@ -91,14 +95,16 @@ function setTransform() {
 	if (!g.currentImage) return;
 	let img = g.currentImage;
 	img.scale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, img.scale));
-	if (img.pos.x === img.last.x && img.pos.y === img.last.y && img.scale === img.last.scale) return;
+	if (img.pos.x === img.last.x && img.pos.y === img.last.y && img.scale === img.last.scale && g.activeFilter === img.last.filter) return;
 	if (img.transformQueued) return;
 	img.transformQueued = true;
 	requestAnimationFrame(() => {
 		img.last.x = img.pos.x;
 		img.last.y = img.pos.y;
 		img.last.scale = img.scale;
+		img.last.filter = g.activeFilter;
 		img.style.transform = `translate(${img.pos.x}px, ${img.pos.y}px) scale(${img.scale})`;
+		img.style.filter = g.activeFilter || 'none';
 		if (img.zoomSlider && Number(img.zoomSlider.value) !== img.scale) {
 			img.zoomSlider.value = img.scale;
 		}
@@ -469,7 +475,8 @@ function generateCroppedImageWorker(img, scale, pos, cropSize) {
 			scale: scale,
 			pos: pos,
 			cropSize: cropSize,
-			backgroundColor: g.CANVAS_BACKGROUND_COLOR
+			backgroundColor: g.CANVAS_BACKGROUND_COLOR,
+			filter: g.activeFilter || 'none'
 		}
 	});
 }
@@ -512,6 +519,7 @@ function generateCroppedImageMainThread(img, scale, pos, cropSize) {
 	let ctx = g.ctx;
 	ctx.fillStyle = g.CANVAS_BACKGROUND_COLOR;
 	ctx.fillRect(0, 0, cropSize.width, cropSize.height);
+	ctx.filter = g.activeFilter || 'none';
 
 	let iW = img.naturalWidth;
 	let iH = img.naturalHeight;
@@ -523,6 +531,7 @@ function generateCroppedImageMainThread(img, scale, pos, cropSize) {
 	ctx.clip();
 	ctx.drawImage(img, pos.x, pos.y, iW * scale, iH * scale);
 	ctx.restore();
+	ctx.filter = 'none';
 }
 
 function initImageWorker() {
