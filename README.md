@@ -8,6 +8,9 @@ This tool eliminates the common frustration of "image too large" or "wrong forma
 
 Try the live demo: https://herrbasan.github.io/imageUpload/
 
+Demo with a minimal implementation:
+https://herrbasan.github.io/imageUpload/min.html
+
 ## Problem Statement
 
 Traditional image upload workflows create barriers for users:
