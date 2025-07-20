@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-version="1.2">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Image Upload</title>
-    <link rel="stylesheet" href="css/main.css?v=1.1">
-    <script type="module" src="js/imageUpload.js?v=1.1"></script>
+    <link rel="stylesheet" href="css/main.css?v=1.2">
+    <script type="module" src="js/imageUpload.js?v=1.2"></script>
 </head>
 <body>
     <header>
@@ -27,65 +27,75 @@
             <div class="card">
                 <input type="file" id="imageUpload-file-select" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml,image/tiff,image/avif" aria-describedby="file-upload-help">
             </div>
-            <div class="col2">
-                <div class="imageUpload-preview-wrapper card">
-                    <div id="imageUpload-preview" class="imageUpload-preview">
-                        <div class="imageUpload-preview-overlay"></div>
-                        <div class="imageUpload-preview-container" tabindex="0" aria-label="Interactive image preview" aria-describedby="imageUpload-controls-help"></div>
-                    </div>
-                
-                    <div class="controls">
-                        <div class="zoom-slider">
-                            <label for="zoom-slider-control">Zoom:</label>
-                            <input type="range" id="zoom-slider-control" min="0.2" max="5" step="0.01" value="1" aria-label="Zoom level" aria-describedby="zoom-help">
+            <div class="disabled">
+                <div class="col2">
+                    <div class="imageUpload-preview-wrapper card">
+                        <div id="imageUpload-preview" class="imageUpload-preview">
+                            <div class="button-container position-controls" tabindex="0" aria-label="Interactive image preview" aria-describedby="imageUpload-controls-help">
+                                <button id="pan-left" aria-label="Move image left"></button>
+                                <button id="pan-right" aria-label="Move image right"></button>
+                                <button id="pan-up" aria-label="Move image up"></button>
+                                <button id="pan-down" aria-label="Move image down"></button>
+                            </div>
+                            <div class="imageUpload-preview-overlay"></div>
+                            <div class="imageUpload-preview-container"></div>
                         </div>
-                        <div class="button-container">
-                            <button id="reset-imageUpload-fill" aria-label="Fill container - scale image to cover entire preview area" aria-describedby="fill-help">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <rect x="7" y="7" width="10" height="10" rx="1" ry="1"></rect>
-                                </svg>
-                            </button>
-                            <button id="reset-imageUpload-fit" aria-label="Fit in container - scale image to show entirely within preview area" aria-describedby="fit-help">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                    <rect x="8" y="8" width="8" height="8" rx="1" ry="1"></rect>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="demo-profile">
-                        <div class="imageUpload-canvas-preview">
-                            <canvas></canvas>
-                        </div>
-                        <div class="info">
-                            <div class="name">Your Name</div>
-                            <div class="email">demo@example.com</div>
+                    
+                        <div class="controls">
+                            <div class="zoom-slider">
+                                <label for="zoom-slider-control">Zoom:</label>
+                                <input type="range" id="zoom-slider-control" min="0.2" max="5" step="0.01" value="1" aria-label="Zoom level" aria-describedby="zoom-help">
+                            </div>
+                            <div class="button-container">
+                                <button id="reset-imageUpload-fill" aria-label="Fill container - scale image to cover entire preview area" aria-describedby="fill-help">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <rect x="7" y="7" width="10" height="10" rx="1" ry="1"></rect>
+                                    </svg>
+                                </button>
+                                <button id="reset-imageUpload-fit" aria-label="Fit in container - scale image to show entirely within preview area" aria-describedby="fit-help">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <rect x="8" y="8" width="8" height="8" rx="1" ry="1"></rect>
+                                    </svg>
+                                </button>
+                            </div>
+                            
                         </div>
                     </div>
-                    <hr>
-                    <div>
-                        <div id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP, BMP, SVG, TIFF, AVIF.</div>
-                        <div id="imageUpload-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Use arrow keys when focused to move image.</div>
-                        <div id="zoom-help" class="sr-only">Adjust zoom level from 0.2x to 5x magnification.</div>
-                        <div id="fill-help" class="sr-only">Scale image to completely fill the preview area, may crop parts of the image.</div>
-                        <div id="fit-help" class="sr-only">Scale image to fit entirely within the preview area with no cropping.</div>
-                        <div id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</div>
-                        <p>Use the mousewheel to zoom in and out of the image. Drag the image to reposition it within the preview area.</p>
-                        <p>On touch devices, pinch to zoom and drag to reposition the image.</p>
-                        <p>With Keyboard navigation, use the arrow keys to move the image around, when focused on the image preview area.</p>
-                    </div>
+                    <div class="card">
+                        <div class="demo-profile">
+                            <div class="imageUpload-canvas-preview">
+                                <canvas></canvas>
+                            </div>
+                            <div class="info">
+                                <div class="name">Your Name</div>
+                                <div class="email">demo@example.com</div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div>
+                            <div id="file-upload-help" class="sr-only">Select an image file to upload and preview. Supported formats: JPEG, PNG, GIF, WebP, BMP, SVG, TIFF, AVIF.</div>
+                            <div id="imageUpload-controls-help" class="sr-only">Use mouse wheel or pinch to zoom. Drag to reposition. Hold Ctrl (or Cmd on Mac) and use arrow keys when focused to move image.</div>
+                            <div id="zoom-help" class="sr-only">Adjust zoom level from 0.2x to 5x magnification.</div>
+                            <div id="fill-help" class="sr-only">Scale image to completely fill the preview area, may crop parts of the image.</div>
+                            <div id="fit-help" class="sr-only">Scale image to fit entirely within the preview area with no cropping.</div>
+                            <div id="upload-help" class="sr-only">Generate and download the cropped image based on current zoom and position.</div>
+                            <p>Use the mousewheel to zoom in and out of the image. Drag the image to reposition it within the preview area.</p>
+                            <p>On touch devices, pinch to zoom and drag to reposition the image.</p>
+                            <p>With Keyboard navigation, hold Ctrl (or Cmd on Mac) and use the arrow keys to move the image around, when focused on the image preview area.</p>
+                        </div>
 
+                    </div>
                 </div>
             </div>
-            <div class="card upload-controls">
-                <button id="imageUpload-upload-button" class="upload-button" aria-describedby="upload-help">
-                    <span class="button-text">Upload Image</span>
-                </button>
+            <div class="disabled">
+                <div class="card upload-controls">
+                    <button id="imageUpload-upload-button" class="upload-button" aria-describedby="upload-help">
+                        <span class="button-text">Upload Image</span>
+                    </button>
+                </div>
             </div>
-            
         </section>
     </main>
 

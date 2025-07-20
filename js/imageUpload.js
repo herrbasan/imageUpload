@@ -145,6 +145,41 @@ function initTransformEvents(img) {
 		};
 	}
 
+	// Initialize position control buttons for accessibility
+	let panLeft = ut.el('#pan-left');
+	let panRight = ut.el('#pan-right');
+	let panUp = ut.el('#pan-up');
+	let panDown = ut.el('#pan-down');
+
+	if (panLeft) {
+		panLeft.onclick = function() {
+			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
+			img.pos.x -= panStep;
+			setTransform();
+		};
+	}
+	if (panRight) {
+		panRight.onclick = function() {
+			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
+			img.pos.x += panStep;
+			setTransform();
+		};
+	}
+	if (panUp) {
+		panUp.onclick = function() {
+			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
+			img.pos.y -= panStep;
+			setTransform();
+		};
+	}
+	if (panDown) {
+		panDown.onclick = function() {
+			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
+			img.pos.y += panStep;
+			setTransform();
+		};
+	}
+
 	if (img.zoomSlider) {
 		img.zoomSlider.min = g.MIN_ZOOM;
 		img.zoomSlider.max = g.MAX_ZOOM;
@@ -272,9 +307,13 @@ function initTransformEvents(img) {
 	}
 
 	// Keyboard pan support when container is focused
+	// Uses Ctrl/Cmd + arrow keys to avoid conflicts with screen readers
 
 	if (g.imagePreviewContainer) {
 		g.imagePreviewContainer.addEventListener('keydown', function(e) {
+			// Only handle arrow keys when Ctrl (Windows/Linux) or Cmd (Mac) is pressed
+			if (!e.ctrlKey && !e.metaKey) return;
+			
 			let panStep = g.KEYBOARD_PAN_STEP * img.scale; // step size relative to current scale
 			let moved = false;
 			switch (e.key) {
@@ -298,6 +337,7 @@ function initTransformEvents(img) {
 			if (moved) {
 				setTransform();
 				e.preventDefault();
+				e.stopPropagation();
 			}
 		});
 	}
