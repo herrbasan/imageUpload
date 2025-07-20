@@ -9,6 +9,7 @@ export function initImageUpload(prop = {}) {
 function init(prop) {
 	applyMinimalStyles();
 	g.imagePreviewContainer = ut.el('.imageUpload-preview-container');
+	g.imagePreviewPositionControls = ut.el('.imageUpload-preview .position-controls');
 	g.imagePreview = g.imagePreviewContainer.parentNode
 	g.imageWidth = g.imageWidth || ut.cssVarNum('--imageUpload-width') || 512;
 	g.imageHeight = g.imageHeight || ut.cssVarNum('--imageUpload-height') || 512;
@@ -145,6 +146,69 @@ function initTransformEvents(img) {
 		};
 	}
 
+	// Consolidated positioning functions
+	function panImage(direction) {
+		let basePanStep = g.KEYBOARD_PAN_STEP;
+		let panStep = basePanStep * Math.max(0.5, img.scale); // Scale with zoom but minimum 0.5x
+		switch (direction) {
+			case 'left':
+				img.pos.x -= panStep;
+				break;
+			case 'right':
+				img.pos.x += panStep;
+				break;
+			case 'up':
+				img.pos.y -= panStep;
+				break;
+			case 'down':
+				img.pos.y += panStep;
+				break;
+		}
+		setTransform();
+	}
+	
+	// Keyboard pan support when container is focused
+	// Uses Ctrl/Cmd + arrow keys to avoid conflicts with screen readers
+	// Uses Alt + up/down arrow keys for zooming
+
+	if (g.imagePreviewPositionControls) {
+		g.imagePreviewPositionControls.addEventListener('keydown', function(e) {
+			let moved = false;
+			
+			// Handle zoom with Alt + Up/Down arrows
+			if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+				zoomImage(e.key === 'ArrowUp' ? 'in' : 'out');
+				moved = true;
+			}
+			// Handle panning with Ctrl/Cmd + arrow keys
+			else if ((e.ctrlKey || e.metaKey) && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+				switch (e.key) {
+					case 'ArrowLeft':
+						panImage('left');
+						moved = true;
+						break;
+					case 'ArrowRight':
+						panImage('right');
+						moved = true;
+						break;
+					case 'ArrowUp':
+						panImage('up');
+						moved = true;
+						break;
+					case 'ArrowDown':
+						panImage('down');
+						moved = true;
+						break;
+				}
+			}
+			
+			if (moved) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		});
+	}
+
 	// Initialize position control buttons for accessibility
 	let panLeft = ut.el('#pan-left');
 	let panRight = ut.el('#pan-right');
@@ -153,31 +217,41 @@ function initTransformEvents(img) {
 
 	if (panLeft) {
 		panLeft.onclick = function() {
-			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
-			img.pos.x -= panStep;
-			setTransform();
+			panImage('left');
 		};
 	}
 	if (panRight) {
 		panRight.onclick = function() {
-			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
-			img.pos.x += panStep;
-			setTransform();
+			panImage('right');
 		};
 	}
 	if (panUp) {
 		panUp.onclick = function() {
-			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
-			img.pos.y -= panStep;
-			setTransform();
+			panImage('up');
 		};
 	}
 	if (panDown) {
 		panDown.onclick = function() {
-			let panStep = g.KEYBOARD_PAN_STEP * img.scale;
-			img.pos.y += panStep;
-			setTransform();
+			panImage('down');
 		};
+	}
+
+	function zoomImage(direction) {
+		let prevScale = img.scale;
+		let baseStep = g.MOUSEWHEEL_ZOOM_STEP;
+		let step = baseStep * img.scale; // Make zoom proportional to current scale
+		let delta = direction === 'in' ? step : -step;
+		let nextScale = Math.max(g.MIN_ZOOM, Math.min(g.MAX_ZOOM, img.scale + delta));
+		
+		// Center zoom on the image center
+		let centerX = g.imageWidth / 2;
+		let centerY = g.imageHeight / 2;
+		let imgCenterX = (centerX - img.pos.x) / prevScale;
+		let imgCenterY = (centerY - img.pos.y) / prevScale;
+		img.pos.x -= (imgCenterX * (nextScale - prevScale));
+		img.pos.y -= (imgCenterY * (nextScale - prevScale));
+		img.scale = nextScale;
+		setTransform();
 	}
 
 	if (img.zoomSlider) {
@@ -304,42 +378,6 @@ function initTransformEvents(img) {
 		let dx = touches[0].clientX - touches[1].clientX;
 		let dy = touches[0].clientY - touches[1].clientY;
 		return Math.sqrt(dx * dx + dy * dy);
-	}
-
-	// Keyboard pan support when container is focused
-	// Uses Ctrl/Cmd + arrow keys to avoid conflicts with screen readers
-
-	if (g.imagePreviewContainer) {
-		g.imagePreviewContainer.addEventListener('keydown', function(e) {
-			// Only handle arrow keys when Ctrl (Windows/Linux) or Cmd (Mac) is pressed
-			if (!e.ctrlKey && !e.metaKey) return;
-			
-			let panStep = g.KEYBOARD_PAN_STEP * img.scale; // step size relative to current scale
-			let moved = false;
-			switch (e.key) {
-				case 'ArrowLeft':
-					img.pos.x -= panStep;
-					moved = true;
-					break;
-				case 'ArrowRight':
-					img.pos.x += panStep;
-					moved = true;
-					break;
-				case 'ArrowUp':
-					img.pos.y -= panStep;
-					moved = true;
-					break;
-				case 'ArrowDown':
-					img.pos.y += panStep;
-					moved = true;
-					break;
-			}
-			if (moved) {
-				setTransform();
-				e.preventDefault();
-				e.stopPropagation();
-			}
-		});
 	}
 }
 
