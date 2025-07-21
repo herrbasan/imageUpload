@@ -304,16 +304,44 @@ input[type="file"]::file-selector-button{
 }
 
 
+.imageUpload-filter-toggle {
+   display: flex;
+   flex-direction: column;
+   max-width: var(--imageUpload-width);
+   margin: auto;
+   position: relative;
+   cursor: pointer;
+   user-select: none;
+   font-size: 0.8rem;
+}
 
+.imageUpload-filter-toggle::after {
+   content: '';
+   display: inline-block;
+   position: absolute;
+   right: 0.5rem;
+   top: 50%;
+   width: 0;
+   height: 0;
+   border-left: 0.4rem solid transparent;
+   border-right: 0.4rem solid transparent;
+   border-top: 0.5rem solid var(--accent-color);
+   transform: translateY(-50%) rotate(0deg);
+   transition: transform 0.2s;
+}
+.imageUpload-filter-toggle[aria-expanded="true"]::after {
+   transform: translateY(-50%) rotate(180deg);
+}
 
 .imageUpload-filter-controls {
    display: flex;
    flex-direction: column;
    gap: var(--space-padding-half);
-   margin-top: var(--space-padding);
    max-width: var(--imageUpload-width);
    margin: auto;
-   margin-top: var(--space-padding-double);
+   overflow: hidden;
+   height: 0px;
+   transition: height 0.2s;
 }
 
 .filter-slider-wrap {
@@ -322,6 +350,9 @@ input[type="file"]::file-selector-button{
    align-items: center;
    gap: var(--space-padding-half);
    margin-bottom: var(--space-padding-quarter);
+}
+.filter-slider-wrap:first-child {
+   margin-top: 2rem;
 }
 
 .filter-slider-wrap label {

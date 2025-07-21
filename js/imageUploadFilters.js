@@ -74,6 +74,7 @@ function initImageFilters(g, ut, setTransform) {
 		}
 		// Expose for preset button logic
 		initImageFilters._updateSliders = updateSliders;
+		initFilterToggle();
 	}
 }
 
@@ -95,4 +96,42 @@ function initFilterSlider(g, ut, setTransform, options) {
 	});
 }
 
-export { initImageFilters };
+function initFilterToggle() {
+	let filterToggle = document.querySelector('.imageUpload-filter-toggle');
+	let filterControls = document.querySelector('.imageUpload-filter-controls');
+	if (filterToggle && filterControls) {
+		filterToggle.setAttribute('tabindex', '0');
+		filterToggle.setAttribute('role', 'button');
+		filterToggle.setAttribute('aria-expanded', 'false');
+		let expanded = false;
+		function setHeight(expand) {
+			if (expand) {
+				let fullHeight = filterControls.scrollHeight;
+				filterControls.style.height = fullHeight + 'px';
+				filterControls.classList.add('expanded');
+				filterToggle.setAttribute('aria-expanded', 'true');
+			} else {
+				filterControls.style.height = '0px';
+				filterControls.classList.remove('expanded');
+				filterToggle.setAttribute('aria-expanded', 'false');
+			}
+		}
+		filterToggle.addEventListener('click', function() {
+			expanded = !expanded;
+			setHeight(expanded);
+		});
+		filterToggle.addEventListener('keydown', function(e) {
+			if (e.key === 'Enter' || e.key === ' ') {
+				expanded = !expanded;
+				setHeight(expanded);
+				e.preventDefault();
+			}
+		});
+		setHeight(false);
+		new MutationObserver(() => {
+			if (expanded) setHeight(true);
+		}).observe(filterControls, { childList: true, subtree: true });
+	}
+}
+
+export { initImageFilters, initFilterToggle };
