@@ -26,12 +26,17 @@ function init(prop) {
 	g.MIN_ZOOM = prop.MIN_ZOOM || 0.05;
 	g.MOUSEWHEEL_ZOOM_STEP = prop.MOUSEWHEEL_ZOOM_STEP || 0.05;
 	g.KEYBOARD_PAN_STEP = prop.KEYBOARD_PAN_STEP || 40; // pixels per key press
+
+	g.ALLOW_FILTERS = prop.ALLOW_FILTERS || true;
+	g.ALLOW_OFFSCREEN_CANVAS = prop.ALLOW_OFFSCREEN_CANVAS || true; // Use OffscreenCanvas if available
 	g.CANVAS_PREVIEW_DELAY = prop.CANVAS_PREVIEW_DELAY || 0; // ms delay for canvas updates
 	g.CANVAS_BACKGROUND_COLOR = prop.CANVAS_BACKGROUND_COLOR || getComputedStyle(document.documentElement).getPropertyValue('--color-canvas-bg') || 'rgb(150, 150, 150)'; // Background color for canvas
 
 	// Initialize worker for offscreen canvas processing
-	initImageWorker(); // This is optional
-	initImageFilters(g, ut, setTransform);
+	if (g.ALLOW_OFFSCREEN_CANVAS) {
+		initImageWorker();
+	}
+	if( g.ALLOW_FILTERS ) { initImageFilters(g, ut, setTransform); }
 
 	window.addEventListener('resize', resizePreviewContainer);
 	resizePreviewContainer();
@@ -86,9 +91,9 @@ function placeImage(img) {
 		sendImageToWorker(img);
 		initTransformEvents(img);
 		applyTransform();
-		initImageFilters(g, ut, setTransform);
-	};
-
+		if( g.ALLOW_FILTERS ) { 
+			initImageFilters(g, ut, setTransform); }
+	}
 }
 
 function setTransform() {
@@ -657,7 +662,7 @@ function initUtilities() {
 	}
 	utils.killKids = function (_el) { _el = utils.el(_el); while (_el?.firstChild) { _el.removeChild(_el.firstChild); } }
 	utils.killMe = function (_el) { _el = utils.el(_el); if (_el?.parentNode) { _el.parentNode.removeChild(_el); } }
-	utils.log = console.log.bind(console);
+	utils.log = () => {} //console.log.bind(console);
 	return utils;
 }
 

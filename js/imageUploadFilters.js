@@ -97,6 +97,7 @@ function initFilterSlider(g, ut, setTransform, options) {
 }
 
 function initFilterToggle() {
+	document.querySelector('.imageUpload-filter-toggle-wrapper').style.display = 'block';
 	let filterToggle = document.querySelector('.imageUpload-filter-toggle');
 	let filterControls = document.querySelector('.imageUpload-filter-controls');
 	if (filterToggle && filterControls) {

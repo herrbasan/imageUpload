@@ -304,6 +304,9 @@ input[type="file"]::file-selector-button{
 }
 
 
+.imageUpload-filter-toggle-wrapper {
+   display: none;
+}
 .imageUpload-filter-toggle {
    display: flex;
    flex-direction: column;
